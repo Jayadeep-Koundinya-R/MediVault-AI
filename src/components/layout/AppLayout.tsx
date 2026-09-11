@@ -16,7 +16,11 @@ import {
   Settings, 
   LogOut,
   Shield,
-  Syringe
+  Syringe,
+  Users,
+  Stethoscope,
+  MessageSquare,
+  ShieldCheck
 } from 'lucide-react';
 
 export const AppLayout: React.FC = () => {
@@ -38,7 +42,10 @@ export const AppLayout: React.FC = () => {
     },
     { to: '/app/prescriptions', label: 'Prescriptions', icon: <FileText size={19} /> },
     { to: '/app/labs', label: 'Lab Reports', icon: <Activity size={19} /> },
-    { to: '/app/vaccinations', label: 'Vaccinations', icon: <Syringe size={19} /> }
+    { to: '/app/vaccinations', label: 'Vaccinations', icon: <Syringe size={19} /> },
+    { to: '/app/family', label: 'Family Health', icon: <Users size={19} /> },
+    { to: '/app/doctors', label: 'Trusted Doctors', icon: <Stethoscope size={19} /> },
+    { to: '/app/messages', label: 'Messages & Chat', icon: <MessageSquare size={19} /> }
   ];
 
   return (
@@ -46,7 +53,7 @@ export const AppLayout: React.FC = () => {
       {/* ===================================================================
           DESKTOP SIDEBAR
           =================================================================== */}
-      <aside className="hidden md:flex w-64 flex-col justify-between bg-white border-r border-slate-200/90 p-5 shadow-clinical-sm fixed top-0 bottom-0 z-40">
+      <aside className="hidden md:flex w-64 flex-col justify-between bg-white border-r border-slate-200/90 p-5 shadow-clinical-sm fixed top-0 bottom-0 z-40 overflow-y-auto">
         <div>
           {/* Logo & Tagline */}
           <div className="flex items-center space-x-3 px-2 mb-8 cursor-pointer" onClick={() => navigate('/app/home')}>
@@ -90,6 +97,18 @@ export const AppLayout: React.FC = () => {
 
         {/* Bottom Sidebar Cluster */}
         <div className="pt-4 border-t border-slate-100 space-y-1">
+          <NavLink
+            to="/app/settings/access"
+            className={({ isActive }) =>
+              `flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+                isActive ? 'bg-slate-100 text-brand-900' : 'text-slate-600 hover:bg-slate-50'
+              }`
+            }
+          >
+            <ShieldCheck size={18} className="text-slate-400" />
+            <span>Access &amp; Audit Logs</span>
+          </NavLink>
+
           <NavLink
             to="/app/profile"
             className={({ isActive }) =>
@@ -143,7 +162,7 @@ export const AppLayout: React.FC = () => {
         {/* ===================================================================
             MOBILE BOTTOM NAVIGATION DOCK WITH FLOATING '+' BUTTON
             =================================================================== */}
-        <nav className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-white/95 backdrop-blur-lg border-t border-slate-200/90 px-4 flex items-center justify-around z-40 shadow-clinical-lg">
+        <nav className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-white/95 backdrop-blur-lg border-t border-slate-200/90 px-2 flex items-center justify-around z-40 shadow-clinical-lg">
           <NavLink
             to="/app/home"
             className={({ isActive }) =>
@@ -152,58 +171,55 @@ export const AppLayout: React.FC = () => {
               }`
             }
           >
-            <Home size={20} />
-            <span className="mt-1">Home</span>
+            <Home size={19} />
+            <span className="mt-0.5">Home</span>
           </NavLink>
 
           <NavLink
-            to="/app/timeline"
+            to="/app/doctors"
             className={({ isActive }) =>
               `flex flex-col items-center justify-center w-12 py-1 text-[10px] font-semibold transition-colors ${
                 isActive ? 'text-brand-900 font-bold' : 'text-slate-400 hover:text-slate-600'
               }`
             }
           >
-            <Clock size={20} />
-            <span className="mt-1">Timeline</span>
+            <Stethoscope size={19} />
+            <span className="mt-0.5">Doctors</span>
           </NavLink>
 
           {/* Elevated Floating Upload Action Button */}
-          <div className="relative -top-5">
+          <div className="relative -top-4">
             <button
               onClick={() => navigate('/app/upload')}
-              className="w-12 h-12 rounded-full bg-brand-900 text-white flex items-center justify-center shadow-clinical-lg border-4 border-clinical-canvas hover:scale-105 active:scale-95 transition-all"
+              className="w-11 h-11 rounded-full bg-brand-900 text-white flex items-center justify-center shadow-clinical-lg border-4 border-clinical-canvas hover:scale-105 active:scale-95 transition-all"
               title="Add New Health Record"
             >
-              <Plus size={24} />
+              <Plus size={22} />
             </button>
           </div>
 
           <NavLink
-            to="/app/summary"
+            to="/app/family"
             className={({ isActive }) =>
               `relative flex flex-col items-center justify-center w-12 py-1 text-[10px] font-semibold transition-colors ${
                 isActive ? 'text-brand-900 font-bold' : 'text-slate-400 hover:text-slate-600'
               }`
             }
           >
-            <Sparkles size={20} />
-            <span className="mt-1">Insights</span>
-            {unacknowledgedFlags > 0 && (
-              <span className="absolute top-0 right-2 w-2 h-2 rounded-full bg-amber-500 ring-2 ring-white animate-pulse"></span>
-            )}
+            <Users size={19} />
+            <span className="mt-0.5">Family</span>
           </NavLink>
 
           <NavLink
-            to="/app/profile"
+            to="/app/messages"
             className={({ isActive }) =>
               `flex flex-col items-center justify-center w-12 py-1 text-[10px] font-semibold transition-colors ${
                 isActive ? 'text-brand-900 font-bold' : 'text-slate-400 hover:text-slate-600'
               }`
             }
           >
-            <User size={20} />
-            <span className="mt-1">Profile</span>
+            <MessageSquare size={19} />
+            <span className="mt-0.5">Chat</span>
           </NavLink>
         </nav>
       </div>

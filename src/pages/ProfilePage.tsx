@@ -210,7 +210,7 @@ export const ProfilePage: React.FC = () => {
                   {member.name.charAt(0)}
                 </div>
                 <h4 className="text-sm font-bold text-slate-900">{member.name}</h4>
-                <span className="text-xs text-slate-500">{member.relationship} &bull; Born {member.dateOfBirth.slice(0, 4)}</span>
+                <span className="text-xs text-slate-500">{member.relationship} &bull; Born {member.dateOfBirth ? member.dateOfBirth.slice(0, 4) : 'N/A'}</span>
               </div>
               <button
                 onClick={() => addToast(`Switched profile view to ${member.name}`, 'info')}

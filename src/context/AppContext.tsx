@@ -16,6 +16,7 @@ import { authService } from '../services/authService';
 import { recordService } from '../services/recordService';
 import { summaryService } from '../services/summaryService';
 import { ocrService } from '../services/ocrService';
+import { notificationService } from '../services/notificationService';
 import { supabase } from '../lib/supabase/client';
 
 interface AppContextType {
@@ -28,11 +29,27 @@ interface AppContextType {
   filter: FilterState;
   familyMembers: FamilyMember[];
   ocrMode: 'default' | 'high' | 'low' | 'failed' | 'mismatch';
+  unreadNotificationsCount: number;
   
   // Auth
   login: (email: string, pass: string) => Promise<void>;
+  loginDoctor: (email: string, pass: string) => Promise<User>;
   loginDemo: () => Promise<void>;
+  loginDemoDoctor: () => Promise<User>;
   signup: (name: string, email: string, pass: string, dob: string) => Promise<void>;
+  signupDoctor: (params: {
+    fullName: string;
+    email: string;
+    password: string;
+    phone: string;
+    specialization: string;
+    medicalRegistrationNumber: string;
+    registrationCountry: string;
+    clinicName: string;
+    clinicAddress?: string;
+    yearsOfExperience: number;
+    bio?: string;
+  }) => Promise<User>;
   recordConsent: () => Promise<void>;
   logout: () => void;
   resetPassword: (email: string) => Promise<boolean>;
@@ -57,6 +74,7 @@ interface AppContextType {
   addToast: (message: string, type?: 'success' | 'error' | 'info' | 'warning') => void;
   removeToast: (id: string) => void;
   addFamilyMember: (member: Omit<FamilyMember, 'id'>) => void;
+  refreshNotifications: () => Promise<void>;
 
   // Demo Controls
   loadDemoData: () => void;
@@ -73,6 +91,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [summary, setSummary] = useState<Summary | null>(null);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
   const [ocrMode, setOcrModeState] = useState<'default' | 'high' | 'low' | 'failed' | 'mismatch'>('default');
+  const [unreadNotificationsCount, setUnreadNotificationsCount] = useState<number>(0);
 
   const [familyMembers, setFamilyMembers] = useState<FamilyMember[]>([
     { id: 'fm_01', name: 'Sunita Sharma', dateOfBirth: '1975-04-12', relationship: 'Mother' },
@@ -86,7 +105,23 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     source: ''
   });
 
+  const refreshNotifications = async () => {
+    if (!user) return;
+    try {
+      const res = await notificationService.getNotifications();
+      setUnreadNotificationsCount(res.unreadCount);
+    } catch {
+      // Ignore background notification fetch errors
+    }
+  };
+
   const refreshData = async () => {
+    // Only fetch patient clinical records if user is a patient
+    if (user && user.accountType === 'doctor') {
+      await refreshNotifications();
+      return;
+    }
+
     try {
       await recordService.syncFromRemote();
     } catch (e) {
@@ -101,6 +136,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     } else {
       setSummary(summaryService.getSummary());
     }
+    await refreshNotifications();
   };
 
   useEffect(() => {
@@ -116,6 +152,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             .eq('id', session.user.id)
             .maybeSingle();
 
+          const accountType = (profile?.account_type || 'patient') as 'patient' | 'doctor';
+
           const { data: consent } = await supabase
             .from('health_consents')
             .select('*')
@@ -130,7 +168,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             email: session.user.email || '',
             dateOfBirth: profile?.date_of_birth || '1990-01-01',
             createdAt: session.user.created_at,
-            consentGiven: consent?.consented ?? true,
+            accountType,
+            consentGiven: accountType === 'doctor' ? true : (consent?.consented ?? true),
             consentDate: consent?.consented_at || undefined,
           };
           setUser(loggedInUser);
@@ -161,10 +200,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const login = async (email: string, pass: string) => {
-    const u = await authService.login(email, pass);
+    const u = await authService.login(email, pass, 'patient');
     setUser(u);
     await refreshData();
     addToast(`Welcome back, ${u.name.split(' ')[0]}`);
+  };
+
+  const loginDoctor = async (email: string, pass: string): Promise<User> => {
+    const u = await authService.login(email, pass, 'doctor');
+    setUser(u);
+    await refreshNotifications();
+    addToast(`Welcome, Dr. ${u.name.replace(/^Dr\.\s*/i, '')}`);
+    return u;
   };
 
   const loginDemo = async () => {
@@ -174,10 +221,37 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     addToast('Logged in as Demo Patient (Rahul Sharma)');
   };
 
+  const loginDemoDoctor = async (): Promise<User> => {
+    const u = await authService.loginDemoDoctor();
+    setUser(u);
+    await refreshNotifications();
+    addToast('Logged in as Demo Doctor (Dr. Ananya Rao)');
+    return u;
+  };
+
   const signup = async (name: string, email: string, pass: string, dob: string) => {
     const u = await authService.signup(name, email, pass, dob);
     setUser(u);
     addToast('Account created. Please review data consent.');
+  };
+
+  const signupDoctor = async (params: {
+    fullName: string;
+    email: string;
+    password: string;
+    phone: string;
+    specialization: string;
+    medicalRegistrationNumber: string;
+    registrationCountry: string;
+    clinicName: string;
+    clinicAddress?: string;
+    yearsOfExperience: number;
+    bio?: string;
+  }): Promise<User> => {
+    const u = await authService.signupDoctor(params);
+    setUser(u);
+    addToast('Doctor account created. Verification is currently pending.');
+    return u;
   };
 
   const recordConsent = async () => {
@@ -294,7 +368,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     <AppContext.Provider
       value={{
         user,
-        isAuthenticated: Boolean(user && user.consentGiven),
+        isAuthenticated: Boolean(user && (user.accountType === 'doctor' || user.consentGiven)),
         records,
         flags,
         summary,
@@ -302,9 +376,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         filter,
         familyMembers,
         ocrMode,
+        unreadNotificationsCount,
         login,
+        loginDoctor,
         loginDemo,
+        loginDemoDoctor,
         signup,
+        signupDoctor,
         recordConsent,
         logout,
         resetPassword,
@@ -317,6 +395,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         addToast,
         removeToast,
         addFamilyMember,
+        refreshNotifications,
         loadDemoData,
         clearDemoData,
         setOcrMode

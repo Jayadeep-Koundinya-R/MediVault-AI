@@ -85,3 +85,51 @@ export async function getAuthenticatedUser(request: Request) {
 
   return { user, token, error: null };
 }
+
+/**
+ * Authenticates a doctor and verifies their account_type and doctor profile
+ */
+export async function getAuthenticatedDoctor(request: Request) {
+  const { user, token, error } = await getAuthenticatedUser(request);
+  if (!user) {
+    return { user: null, doctorProfile: null, token: null, error: error || 'Unauthorized' };
+  }
+
+  const pool = getPgPool();
+  const res = await pool.query(
+    `SELECT p.account_type, dp.* 
+     FROM profiles p 
+     LEFT JOIN doctor_profiles dp ON dp.user_id = p.id 
+     WHERE p.id = $1`,
+    [user.id]
+  );
+
+  const row = res.rows[0];
+  if (!row || row.account_type !== 'doctor') {
+    return { user: null, doctorProfile: null, token: null, error: 'Forbidden: Doctor account required' };
+  }
+
+  return { user, doctorProfile: row, token, error: null };
+}
+
+/**
+ * Logs data access for auditing purposes
+ */
+export async function logAccess(params: {
+  actorUserId: string;
+  patientUserId: string;
+  action: string;
+  resourceType: string;
+  resourceId?: string;
+}) {
+  try {
+    const pool = getPgPool();
+    await pool.query(
+      `INSERT INTO access_logs (actor_user_id, patient_user_id, action, resource_type, resource_id)
+       VALUES ($1, $2, $3, $4, $5)`,
+      [params.actorUserId, params.patientUserId, params.action, params.resourceType, params.resourceId || null]
+    );
+  } catch (err) {
+    console.warn('Failed to record access log:', err);
+  }
+}

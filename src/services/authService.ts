@@ -1,4 +1,4 @@
-import { User } from '../types';
+import { User, AccountType, DoctorProfile } from '../types';
 import { DEMO_USER } from '../data/seedData';
 import { supabase } from '../lib/supabase/client';
 
@@ -28,7 +28,7 @@ export const authService = {
     return data?.session?.access_token || null;
   },
 
-  async login(email: string, password: string): Promise<User> {
+  async login(email: string, password: string, expectedAccountType?: AccountType): Promise<User> {
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
         email: email.trim(),
@@ -36,7 +36,6 @@ export const authService = {
       });
 
       if (error) {
-        // If invalid credentials or not found, provide clear user feedback
         throw new Error(error.message || "We couldn't log you in. Check your email and password.");
       }
 
@@ -44,12 +43,25 @@ export const authService = {
         throw new Error('Login failed: user data unavailable.');
       }
 
-      // Fetch profile and consent from Supabase
+      // Fetch profile from Supabase to strictly verify account_type
       const { data: profile } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', data.user.id)
         .maybeSingle();
+
+      const accountType: AccountType = (profile?.account_type as AccountType) || 'patient';
+
+      // Strict account separation enforcement
+      if (expectedAccountType === 'doctor' && accountType !== 'doctor') {
+        await supabase.auth.signOut();
+        throw new Error('This account is registered as a patient account.');
+      }
+
+      if (expectedAccountType === 'patient' && accountType === 'doctor') {
+        await supabase.auth.signOut();
+        throw new Error('This account is registered as a doctor account. Please use Doctor Sign In.');
+      }
 
       const { data: consent } = await supabase
         .from('health_consents')
@@ -65,8 +77,9 @@ export const authService = {
         email: data.user.email || email,
         dateOfBirth: profile?.date_of_birth || '1990-01-01',
         createdAt: data.user.created_at,
+        accountType,
         abhaId: profile?.phone ? `91-${profile.phone.slice(-4)}-2026-4491` : '91-8472-1920-4491',
-        consentGiven: consent?.consented ?? true,
+        consentGiven: accountType === 'doctor' ? true : (consent?.consented ?? true),
         consentDate: consent?.consented_at || undefined,
       };
 
@@ -78,18 +91,247 @@ export const authService = {
     }
   },
 
-  async loginDemo(): Promise<User> {
-    const demoEmail = 'demo.rahul@healthvault.local';
-    const demoPass = 'HealthVaultDemo2026!';
+  async signup(name: string, email: string, password: string, dateOfBirth: string): Promise<User> {
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email: email.trim(),
+        password,
+        options: {
+          data: {
+            full_name: name,
+            date_of_birth: dateOfBirth,
+            account_type: 'patient',
+          },
+        },
+      });
+
+      if (error) {
+        throw new Error(error.message || 'Registration failed. Please check your details.');
+      }
+
+      const userId = data.user?.id || `user_${Date.now()}`;
+
+      // Ensure profile record has account_type = 'patient'
+      try {
+        await supabase
+          .from('profiles')
+          .upsert({
+            id: userId,
+            full_name: name,
+            email: email.trim(),
+            date_of_birth: dateOfBirth,
+            account_type: 'patient',
+          });
+      } catch (e) {
+        console.warn('Profile upsert note:', e);
+      }
+
+      const newUser: User = {
+        id: userId,
+        name,
+        email,
+        dateOfBirth,
+        createdAt: new Date().toISOString(),
+        accountType: 'patient',
+        abhaId: `91-${Math.floor(1000 + Math.random() * 9000)}-${Math.floor(1000 + Math.random() * 9000)}-${Math.floor(1000 + Math.random() * 9000)}`,
+        consentGiven: false, // Must complete consent step
+      };
+
+      this.setCurrentUser(newUser);
+      return newUser;
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      throw new Error(msg || 'Registration failed. Please try again.');
+    }
+  },
+
+  async signupDoctor(params: {
+    fullName: string;
+    email: string;
+    password: string;
+    phone: string;
+    specialization: string;
+    medicalRegistrationNumber: string;
+    registrationCountry: string;
+    clinicName: string;
+    clinicAddress?: string;
+    yearsOfExperience: number;
+    bio?: string;
+  }): Promise<User> {
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email: params.email.trim(),
+        password: params.password,
+        options: {
+          data: {
+            full_name: params.fullName,
+            account_type: 'doctor',
+          },
+        },
+      });
+
+      if (error) {
+        throw new Error(error.message || 'Doctor registration failed.');
+      }
+
+      if (!data.user) {
+        throw new Error('Registration failed: user profile could not be created.');
+      }
+
+      const userId = data.user.id;
+
+      // Create/update profile row
+      await supabase
+        .from('profiles')
+        .upsert({
+          id: userId,
+          full_name: params.fullName,
+          email: params.email.trim(),
+          phone: params.phone,
+          account_type: 'doctor',
+        });
+
+      // Create doctor_profiles row
+      await supabase
+        .from('doctor_profiles')
+        .upsert({
+          user_id: userId,
+          full_name: params.fullName,
+          email: params.email.trim(),
+          phone: params.phone,
+          specialization: params.specialization,
+          medical_registration_number: params.medicalRegistrationNumber,
+          registration_country: params.registrationCountry || 'India',
+          clinic_name: params.clinicName,
+          clinic_address: params.clinicAddress || '',
+          years_of_experience: Number(params.yearsOfExperience) || 1,
+          bio: params.bio || '',
+          verification_status: 'pending', // Pending by default
+        });
+
+      const doctorUser: User = {
+        id: userId,
+        name: params.fullName,
+        email: params.email,
+        dateOfBirth: '1980-01-01',
+        createdAt: new Date().toISOString(),
+        accountType: 'doctor',
+        consentGiven: true, // Doctors don't need DPDP patient consent
+      };
+
+      this.setCurrentUser(doctorUser);
+      return doctorUser;
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      throw new Error(msg || 'Doctor registration failed. Please try again.');
+    }
+  },
+
+  async loginDemoDoctor(): Promise<User> {
+    const demoEmail = 'demo.dr.ananya@healthvault.local';
+    const demoPass = 'DoctorVault2026!';
 
     try {
-      // Try logging into existing demo account
       let { data, error } = await supabase.auth.signInWithPassword({
         email: demoEmail,
         password: demoPass,
       });
 
-      // If user doesn't exist yet, sign them up
+      if (error && (error.message.includes('Invalid login') || error.message.includes('not found') || error.message.includes('credentials'))) {
+        // Sign up demo doctor
+        const signUpRes = await supabase.auth.signUp({
+          email: demoEmail,
+          password: demoPass,
+          options: {
+            data: {
+              full_name: 'Dr. Ananya Rao',
+              account_type: 'doctor',
+            },
+          },
+        });
+
+        const activeUser = signUpRes.data.user;
+        if (activeUser) {
+          await supabase
+            .from('profiles')
+            .upsert({
+              id: activeUser.id,
+              full_name: 'Dr. Ananya Rao',
+              email: demoEmail,
+              phone: '+91 98450 12345',
+              account_type: 'doctor',
+            });
+
+          await supabase
+            .from('doctor_profiles')
+            .upsert({
+              user_id: activeUser.id,
+              full_name: 'Dr. Ananya Rao',
+              email: demoEmail,
+              phone: '+91 98450 12345',
+              specialization: 'General Medicine',
+              medical_registration_number: 'MCI-2014-98421',
+              registration_country: 'India',
+              clinic_name: 'CityCare Hospital',
+              clinic_address: 'Indiranagar, Bengaluru',
+              years_of_experience: 10,
+              bio: 'Senior Consultant Physician specializing in preventive medicine and metabolic disorders.',
+              verification_status: 'verified', // Pre-verified for demo
+            });
+
+          const docUser: User = {
+            id: activeUser.id,
+            name: 'Dr. Ananya Rao',
+            email: demoEmail,
+            dateOfBirth: '1982-06-15',
+            createdAt: new Date().toISOString(),
+            accountType: 'doctor',
+            consentGiven: true,
+          };
+
+          this.setCurrentUser(docUser);
+          return docUser;
+        }
+      } else if (data?.user) {
+        const docUser: User = {
+          id: data.user.id,
+          name: 'Dr. Ananya Rao',
+          email: demoEmail,
+          dateOfBirth: '1982-06-15',
+          createdAt: data.user.created_at,
+          accountType: 'doctor',
+          consentGiven: true,
+        };
+        this.setCurrentUser(docUser);
+        return docUser;
+      }
+    } catch (e) {
+      console.warn('Demo doctor login note:', e);
+    }
+
+    const fallbackDoc: User = {
+      id: 'doctor_demo_01',
+      name: 'Dr. Ananya Rao',
+      email: demoEmail,
+      dateOfBirth: '1982-06-15',
+      createdAt: new Date().toISOString(),
+      accountType: 'doctor',
+      consentGiven: true,
+    };
+    this.setCurrentUser(fallbackDoc);
+    return fallbackDoc;
+  },
+
+  async loginDemo(): Promise<User> {
+    const demoEmail = 'demo.rahul@healthvault.local';
+    const demoPass = 'HealthVaultDemo2026!';
+
+    try {
+      let { data, error } = await supabase.auth.signInWithPassword({
+        email: demoEmail,
+        password: demoPass,
+      });
+
       if (error && (error.message.includes('Invalid login') || error.message.includes('not found') || error.message.includes('credentials'))) {
         const signUpRes = await supabase.auth.signUp({
           email: demoEmail,
@@ -98,20 +340,15 @@ export const authService = {
             data: {
               full_name: 'Rahul Sharma',
               date_of_birth: '1985-04-12',
+              account_type: 'patient',
             },
           },
         });
 
-        let activeUser = data?.user;
-        let activeSession = data?.session;
-
-        if (signUpRes.data.user) {
-          activeUser = signUpRes.data.user;
-          activeSession = signUpRes.data.session;
-        }
+        let activeUser = data?.user || signUpRes.data.user;
+        let activeSession = data?.session || signUpRes.data.session;
 
         if (activeSession?.access_token && activeUser) {
-          // Trigger server-side demo seeding
           await fetch('/api/demo/seed', {
             method: 'POST',
             headers: {
@@ -126,6 +363,7 @@ export const authService = {
             email: demoEmail,
             dateOfBirth: '1985-04-12',
             createdAt: new Date().toISOString(),
+            accountType: 'patient',
             abhaId: '91-8472-1920-4491',
             consentGiven: true,
             consentDate: new Date().toISOString(),
@@ -149,56 +387,21 @@ export const authService = {
           email: demoEmail,
           dateOfBirth: '1985-04-12',
           createdAt: new Date().toISOString(),
+          accountType: 'patient',
           abhaId: '91-8472-1920-4491',
           consentGiven: true,
           consentDate: new Date().toISOString(),
         };
 
         this.setCurrentUser(demoUser);
+        return demoUser;
       }
     } catch (e) {
       console.warn('Supabase remote demo auth fallback to local demo user:', e);
     }
 
-    // Fallback to DEMO_USER
     this.setCurrentUser(DEMO_USER);
     return DEMO_USER;
-  },
-
-  async signup(name: string, email: string, password: string, dateOfBirth: string): Promise<User> {
-    try {
-      const { data, error } = await supabase.auth.signUp({
-        email: email.trim(),
-        password,
-        options: {
-          data: {
-            full_name: name,
-            date_of_birth: dateOfBirth,
-          },
-        },
-      });
-
-      if (error) {
-        throw new Error(error.message || 'Registration failed. Please check your details.');
-      }
-
-      const userId = data.user?.id || `user_${Date.now()}`;
-      const newUser: User = {
-        id: userId,
-        name,
-        email,
-        dateOfBirth,
-        createdAt: new Date().toISOString(),
-        abhaId: `91-${Math.floor(1000 + Math.random() * 9000)}-${Math.floor(1000 + Math.random() * 9000)}-${Math.floor(1000 + Math.random() * 9000)}`,
-        consentGiven: false, // Must complete consent step!
-      };
-
-      this.setCurrentUser(newUser);
-      return newUser;
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : String(err);
-      throw new Error(msg || 'Registration failed. Please try again.');
-    }
   },
 
   async recordConsent(): Promise<User> {

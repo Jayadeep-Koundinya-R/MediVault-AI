@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { 
   Sparkles, 
@@ -15,9 +15,14 @@ import {
   CheckCircle2, 
   Info,
   Calendar,
-  Building2
+  Building2,
+  Star,
+  Stethoscope,
+  ArrowRight
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import { doctorService } from '../services/doctorService';
+import { DoctorReview } from '../types';
 import Card from '../components/common/Card';
 import Button from '../components/common/Button';
 import Badge from '../components/common/Badge';
@@ -33,6 +38,25 @@ export const SummaryPage: React.FC = () => {
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [showRecordsUsed, setShowRecordsUsed] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
+  const [doctorReviews, setDoctorReviews] = useState<DoctorReview[]>([]);
+
+  // Load reviews specifically attached to this summary.id (Provenance rule: Prompt Section 28, 101, 102)
+  const loadReviews = async () => {
+    if (summary?.id) {
+      try {
+        const revs = await doctorService.getDoctorReviews(summary.id);
+        setDoctorReviews(revs);
+      } catch (e) {
+        console.warn('Reviews load note:', e);
+      }
+    } else {
+      setDoctorReviews([]);
+    }
+  };
+
+  useEffect(() => {
+    loadReviews();
+  }, [summary?.id]);
 
   const activeMedications = records
     .filter(r => r.prescription)
@@ -44,7 +68,8 @@ export const SummaryPage: React.FC = () => {
     setAiError(null);
     try {
       await generateSummary();
-      addToast('Health Summary generated dynamically with Qwen');
+      addToast('Health Summary regenerated dynamically with Qwen');
+      // Notice: New summary v2 has a new summary ID, so reviews will correctly reset to empty until reviewed
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'AI model service unavailable';
       setAiError(msg);
@@ -73,6 +98,8 @@ export const SummaryPage: React.FC = () => {
     );
   }
 
+  const isDoctorReviewed = doctorReviews.length > 0;
+
   return (
     <div className="max-w-4xl mx-auto space-y-6 pb-12">
       {/* Top Header */}
@@ -83,14 +110,33 @@ export const SummaryPage: React.FC = () => {
             <span>•</span>
             <span>Synthesized Health Overview</span>
           </div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight mt-0.5 flex items-center gap-2">
+          <h1 className="text-2xl font-bold text-slate-900 tracking-tight mt-0.5 flex flex-wrap items-center gap-2">
             AI Health Summary
             <span className="text-xs font-semibold bg-teal-100 text-teal-800 px-2 py-0.5 rounded-full">
               Updated Today
             </span>
+
+            {/* Doctor Reviewed ★ Blue Star Badge (Prompt Section 27, 75, 76) */}
+            {isDoctorReviewed ? (
+              <span
+                title="Reviewed by your trusted doctor"
+                className="inline-flex items-center space-x-1 px-3 py-0.5 rounded-full bg-blue-50 border border-blue-300 text-blue-700 text-xs font-bold shadow-clinical-sm"
+              >
+                <Star size={13} className="text-blue-600 fill-blue-600" />
+                <span>
+                  {doctorReviews.length > 1
+                    ? `Doctor Reviewed ★ (${doctorReviews.length} Doctors)`
+                    : `Doctor Reviewed ★`}
+                </span>
+              </span>
+            ) : (
+              <span className="text-xs font-medium text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">
+                Not yet reviewed by a doctor
+              </span>
+            )}
           </h1>
           <p className="text-xs text-slate-600 mt-1">
-            Consolidated overview generated from {records.length} records in your local vault.
+            Consolidated overview generated from {records.length} records in your local vault. Powered by local Ollama · Qwen.
           </p>
         </div>
 
@@ -162,11 +208,68 @@ export const SummaryPage: React.FC = () => {
           </div>
           <h3 className="text-base font-bold text-slate-900">Recent Health Overview</h3>
         </div>
-        <p className="text-sm text-slate-700 leading-relaxed">
+        <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-line">
           {summary?.overview || summary?.summaryText || 
-            "Patient is an adult male with active maintenance medication for blood pressure (Telmisartan) and recent initiation of Metformin following three sequential elevated fasting glucose tests. Fasting blood sugar exhibits an upward trajectory over the past three months. No active adverse drug interactions identified."
+            "Patient is an adult male with active maintenance medication for blood pressure (Telmisartan) and recent initiation of Metformin following sequential elevated fasting glucose tests. Fasting blood sugar exhibits an upward trajectory. No active adverse drug interactions identified."
           }
         </p>
+      </Card>
+
+      {/* DOCTOR REVIEW SECTION (Prompt Section 75, 98, 100) */}
+      <Card className="p-6 space-y-4 border-2 border-blue-100 bg-gradient-to-br from-white to-blue-50/30">
+        <div className="flex items-center justify-between border-b border-blue-100 pb-3">
+          <div className="flex items-center space-x-2">
+            <div className="w-8 h-8 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center">
+              <Star size={18} className="fill-blue-600 text-blue-600" />
+            </div>
+            <div>
+              <h3 className="text-base font-bold text-slate-900">Doctor Clinical Review</h3>
+              <p className="text-xs text-slate-500">Human physician evaluation of this report</p>
+            </div>
+          </div>
+
+          {isDoctorReviewed && (
+            <span className="inline-flex items-center space-x-1 px-3 py-1 rounded-full bg-blue-600 text-white text-xs font-bold shadow-clinical-sm">
+              <Star size={13} className="fill-white" />
+              <span>★ Doctor Reviewed</span>
+            </span>
+          )}
+        </div>
+
+        {isDoctorReviewed ? (
+          <div className="space-y-4">
+            {doctorReviews.map((rev) => (
+              <div key={rev.id} className="p-4 rounded-2xl bg-white border border-blue-200 shadow-clinical-sm space-y-2">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between text-xs gap-1">
+                  <div className="flex items-center space-x-2 font-bold text-blue-950">
+                    <Stethoscope size={15} className="text-blue-600" />
+                    <span>{rev.doctorName || 'Dr. Physician'}</span>
+                    <span className="text-slate-400 font-normal">({rev.doctorSpecialization || 'General Medicine'})</span>
+                  </div>
+                  <span className="text-[11px] text-slate-500">
+                    Reviewed on {new Date(rev.reviewedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                  </span>
+                </div>
+                <p className="text-xs text-slate-700 leading-relaxed bg-slate-50 p-3 rounded-xl">
+                  "{rev.reviewText}"
+                </p>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="p-6 rounded-2xl bg-slate-50 border border-slate-200/80 text-center space-y-3">
+            <p className="text-xs text-slate-500">
+              This summary has not been reviewed by a trusted doctor yet. Share this report with your verified physician to receive professional clinical notes and the <strong>Doctor Reviewed ★</strong> badge.
+            </p>
+            <button
+              onClick={() => navigate('/app/doctors')}
+              className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs inline-flex items-center space-x-1.5 shadow-clinical-sm transition-colors"
+            >
+              <Stethoscope size={14} />
+              <span>Share with Trusted Doctor</span>
+            </button>
+          </div>
+        )}
       </Card>
 
       {/* SECTION 2: KEY LAB TRENDS (WITH TREND CHART) */}
@@ -213,7 +316,7 @@ export const SummaryPage: React.FC = () => {
             </ul>
           ) : (
             <p className="leading-relaxed">
-              Fasting glucose rose by +34 mg/dL across three readings (108 &rarr; 124 &rarr; 142 mg/dL). 
+              Fasting glucose rose by +34 mg/dL across sequential readings (108 &rarr; 124 &rarr; 142 mg/dL). 
               Current value (142 mg/dL) exceeds the standard American Diabetes Association (ADA) clinical threshold of 126 mg/dL.
             </p>
           )}

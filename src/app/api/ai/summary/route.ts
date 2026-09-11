@@ -40,10 +40,43 @@ export async function GET(request: Request) {
       throw new Error(`Database error fetching risk flags: ${flagError.message}`);
     }
 
+    let latestSummary = summaries && summaries.length > 0 ? summaries[0] : null;
+
+    if (latestSummary) {
+      const { getPgPool } = await import('../../../../lib/supabase/server');
+      const pool = getPgPool();
+      const revRes = await pool.query(
+        `SELECT 
+          dr.id,
+          dr.doctor_id as "doctorId",
+          dr.patient_id as "patientId",
+          dr.summary_id as "summaryId",
+          dr.review_text as "reviewText",
+          dr.status,
+          dr.reviewed_at as "reviewedAt",
+          dr.created_at as "createdAt",
+          dp.full_name as "doctorName",
+          dp.specialization as "doctorSpecialization",
+          dp.clinic_name as "doctorClinic"
+         FROM doctor_reviews dr
+         LEFT JOIN doctor_profiles dp ON dp.user_id = dr.doctor_id
+         WHERE dr.summary_id = $1
+         ORDER BY dr.reviewed_at DESC`,
+        [latestSummary.id]
+      );
+      const reviews = revRes.rows;
+      latestSummary = {
+        ...latestSummary,
+        doctorReviews: reviews,
+        isDoctorReviewed: reviews.length > 0,
+      };
+    }
+
     return NextResponse.json({
       success: true,
+      summary: latestSummary,
       data: {
-        summary: summaries && summaries.length > 0 ? summaries[0] : null,
+        summary: latestSummary,
         riskFlags: riskFlags || [],
       },
     });
