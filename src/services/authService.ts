@@ -29,6 +29,19 @@ export const authService = {
   },
 
   async login(email: string, password: string, expectedAccountType?: AccountType): Promise<User> {
+    const cleanEmail = email.trim().toLowerCase();
+    const isDemoPatient = 
+      cleanEmail === 'demo.rahul@medivault.local' ||
+      cleanEmail === 'demo.rahul@healthvault.local' ||
+      cleanEmail === 'demo@medivault.local' ||
+      cleanEmail === 'demo@medivault.com' ||
+      cleanEmail === 'rahul@medivault.local' ||
+      cleanEmail === 'rahul@example.com';
+
+    if (isDemoPatient && expectedAccountType !== 'doctor') {
+      return this.loginDemo();
+    }
+
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
         email: email.trim(),

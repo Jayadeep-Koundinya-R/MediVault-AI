@@ -215,6 +215,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const loginDemo = async () => {
+    recordService.resetToDemoData();
     const u = await authService.loginDemo();
     setUser(u);
     await refreshData();

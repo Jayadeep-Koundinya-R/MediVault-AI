@@ -39,7 +39,6 @@ import { DoctorSharingPreferencesPage } from './pages/DoctorSharingPreferencesPa
 import { FamilyPage } from './pages/FamilyPage';
 import { FamilyMemberDetailPage } from './pages/FamilyMemberDetailPage';
 import { MessagesPage } from './pages/MessagesPage';
-import { AccessManagementPage } from './pages/AccessManagementPage';
 
 // New MediVault 2.0 Doctor Portal Pages
 import { DoctorDashboardPage } from './pages/doctor/DoctorDashboardPage';
@@ -144,7 +143,6 @@ export const App: React.FC = () => {
           <Route path="flags/:id" element={<FlagDetailPage />} />
           <Route path="profile" element={<ProfilePage />} />
           <Route path="settings" element={<SettingsPage />} />
-          <Route path="settings/access" element={<AccessManagementPage />} />
           <Route path="privacy" element={<PrivacyPage />} />
 
           {/* MediVault 2.0 Patient Features */}

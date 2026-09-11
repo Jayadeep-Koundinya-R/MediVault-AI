@@ -61,22 +61,52 @@ export const LoginPage: React.FC = () => {
           </p>
         </div>
 
-        {/* Demo Account Button */}
-        <div className="mb-6 p-4 rounded-2xl bg-brand-50/70 border border-brand-200/80 text-center">
-          <p className="text-xs font-semibold text-brand-900 mb-2">
-            Evaluating MediVault?
-          </p>
+        {/* Perfect Demo Patient Account Card */}
+        <div className="mb-6 p-4 rounded-2xl bg-gradient-to-br from-brand-50 to-teal-50/70 border border-teal-200/90 shadow-xs space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="inline-flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full bg-teal-100/80 text-teal-800 text-[11px] font-bold">
+              <Sparkles size={13} className="text-teal-600" />
+              <span>1-CLICK EVALUATION ACCOUNT</span>
+            </span>
+            <span className="text-[10px] font-mono text-slate-500 font-semibold">Ready to Test</span>
+          </div>
+
+          <div className="flex items-center space-x-3 bg-white/80 backdrop-blur-xs p-2.5 rounded-xl border border-teal-100">
+            <div className="w-9 h-9 rounded-full bg-brand-900 text-cyan-300 font-bold text-xs flex items-center justify-center shrink-0">
+              RS
+            </div>
+            <div className="text-left flex-1 min-w-0">
+              <div className="font-bold text-xs text-slate-900 leading-tight">Rahul Sharma</div>
+              <div className="text-[10px] text-slate-500 truncate">40M · Type 2 Diabetes &amp; Glycemic Tracking</div>
+              <div className="text-[10px] text-teal-700 font-medium mt-0.5">10+ Records · Connected Doctor · Active Chat</div>
+            </div>
+          </div>
+
           <Button
             type="button"
             variant="primary"
             size="md"
             onClick={handleDemoLogin}
             isLoading={isDemoLoading}
-            className="w-full bg-brand-900 hover:bg-brand-800"
+            className="w-full bg-brand-900 hover:bg-brand-800 shadow-clinical-sm"
             leftIcon={<Sparkles size={16} className="text-cyan-300" />}
           >
-            Use Demo Account (Rahul Sharma)
+            Enter as Demo Patient (Rahul Sharma)
           </Button>
+
+          <div className="flex items-center justify-between pt-1 text-[11px] text-slate-500 px-1">
+            <span>Or enter credentials manually:</span>
+            <button
+              type="button"
+              onClick={() => {
+                setEmail('demo.rahul@medivault.local');
+                setPassword('MediVaultDemo2026!');
+              }}
+              className="text-teal-700 font-bold hover:underline"
+            >
+              Autofill Form
+            </button>
+          </div>
         </div>
 
         <div className="relative flex py-2 items-center mb-4">

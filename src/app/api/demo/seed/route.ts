@@ -247,6 +247,140 @@ export async function POST(request: Request) {
       }
     }
 
+    // 9. For demo patient Rahul Sharma, seed initial summary, doctor connection, chat, and family
+    const isDemoPatient = user.email?.toLowerCase().includes('rahul') || user.email === 'demo.rahul@healthvault.local';
+    if (isDemoPatient) {
+      try {
+        // A. Seed baseline AI health summary
+        const { data: sumData } = await supabase
+          .from('summaries')
+          .insert({
+            user_id: user.id,
+            summary_text: 'Active Clinical Assessment: The patient is a 40-year-old male presenting with mild fasting hyperglycemia and borderline glycated hemoglobin (HbA1c 6.8%). Longitudinal laboratory trends over 12 months demonstrate positive response to Metformin 500mg BD therapy, with Fasting Blood Sugar reducing from 128 mg/dL toward normal reference range. Lipid panel reflects mild LDL cholesterol elevation (142 mg/dL) managed on Atorvastatin 20mg. Renal function (Creatinine 0.9 mg/dL) remains normal.',
+            trend_notes: [
+              'Fasting blood glucose declining toward target range (128 → 114 mg/dL)',
+              'HbA1c stable at 6.8% under active Metformin therapy',
+              'Mildly elevated LDL cholesterol (142 mg/dL) under statin management',
+              'Renal function within optimal reference range (Creatinine 0.9 mg/dL)'
+            ],
+            model_name: 'qwen2.5:7b',
+            model_provider: 'ollama',
+          })
+          .select()
+          .maybeSingle();
+
+        // B. Look up Dr. Ananya Rao's profile
+        const { data: docProfiles } = await supabase
+          .from('doctor_profiles')
+          .select('id, user_id, full_name')
+          .limit(1);
+
+        const targetDoctor = docProfiles?.[0];
+        if (targetDoctor && targetDoctor.user_id) {
+          // Create or update doctor-patient relationship
+          const { data: relData } = await supabase
+            .from('doctor_patient_relationships')
+            .upsert({
+              doctor_id: targetDoctor.user_id,
+              patient_id: user.id,
+              status: 'accepted',
+              requested_by: user.id,
+              accepted_at: new Date().toISOString(),
+            }, { onConflict: 'doctor_id,patient_id' })
+            .select()
+            .maybeSingle();
+
+          if (relData) {
+            await supabase
+              .from('doctor_access_permissions')
+              .upsert({
+                relationship_id: relData.id,
+                share_summary: true,
+                share_labs: true,
+                share_prescriptions: true,
+                share_vaccinations: true,
+                share_original_documents: true,
+              }, { onConflict: 'relationship_id' });
+          }
+
+          // Doctor Review with "Doctor Reviewed ★" badge
+          if (sumData) {
+            await supabase
+              .from('doctor_reviews')
+              .insert({
+                doctor_id: targetDoctor.user_id,
+                patient_id: user.id,
+                summary_id: sumData.id,
+                review_text: 'Reviewed longitudinal glycemic trajectory. Glycemic control is improving with Metformin 500mg. Continue current pharmacotherapy regimen and repeat lipid panel in 12 weeks.',
+                status: 'reviewed',
+              });
+          }
+
+          // Conversation and chat messages
+          const { data: convData } = await supabase
+            .from('conversations')
+            .upsert({
+              patient_id: user.id,
+              doctor_id: targetDoctor.user_id,
+            }, { onConflict: 'patient_id,doctor_id' })
+            .select()
+            .maybeSingle();
+
+          if (convData) {
+            await supabase.from('messages').delete().eq('conversation_id', convData.id);
+            await supabase.from('messages').insert([
+              {
+                conversation_id: convData.id,
+                sender_id: targetDoctor.user_id,
+                message_text: 'Hello Rahul, I have reviewed your latest metabolic panel and prescription records. The glycemic levels show notable improvement.',
+                created_at: new Date(Date.now() - 3600 * 1000 * 24).toISOString(),
+              },
+              {
+                conversation_id: convData.id,
+                sender_id: user.id,
+                message_text: 'Thank you Dr. Ananya! Should I continue the same dosage of Metformin with meals?',
+                created_at: new Date(Date.now() - 3600 * 1000 * 12).toISOString(),
+              },
+              {
+                conversation_id: convData.id,
+                sender_id: targetDoctor.user_id,
+                message_text: 'Yes, maintain 500mg twice daily after meals. Let us schedule a follow-up consultation in 6 weeks.',
+                created_at: new Date(Date.now() - 3600 * 1000 * 2).toISOString(),
+              },
+            ]);
+          }
+        }
+
+        // C. Family Member
+        const { data: famData } = await supabase
+          .from('family_relationships')
+          .insert({
+            owner_user_id: user.id,
+            member_name: 'Sunita Sharma',
+            relationship_type: 'Mother',
+            status: 'accepted',
+            accepted_at: new Date().toISOString(),
+          })
+          .select()
+          .maybeSingle();
+
+        if (famData) {
+          await supabase
+            .from('family_access_permissions')
+            .upsert({
+              family_relationship_id: famData.id,
+              share_summary: true,
+              share_prescriptions: true,
+              share_labs: false,
+              share_vaccinations: true,
+              share_flags: false,
+            }, { onConflict: 'family_relationship_id' });
+        }
+      } catch (subErr) {
+        console.warn('Demo extra seed note:', subErr);
+      }
+    }
+
     return NextResponse.json({
       success: true,
       message: 'Demo health records seeded successfully for user',

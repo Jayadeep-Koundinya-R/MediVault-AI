@@ -3,9 +3,10 @@ import { User, DocumentRecord, Prescription, LabResult, Vaccination, RiskFlag, U
 export const DEMO_USER: User = {
   id: 'user_rahul_01',
   name: 'Rahul Sharma',
-  email: 'rahul@example.com',
-  dateOfBirth: '2002-08-14',
+  email: 'demo.rahul@medivault.local',
+  dateOfBirth: '1985-04-12',
   createdAt: '2026-01-10T09:00:00Z',
+  accountType: 'patient',
   abhaId: '91-8472-1920-4491',
   consentGiven: true,
   consentDate: '2026-01-10T09:05:00Z'
