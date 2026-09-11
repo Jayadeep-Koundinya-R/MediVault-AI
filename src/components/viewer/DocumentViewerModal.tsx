@@ -124,7 +124,7 @@ export const DocumentViewerModal: React.FC<DocumentViewerModalProps> = ({
 
       {/* Bottom Footer Info */}
       <div className="text-center text-xs text-slate-400 font-mono py-1">
-        HealthVault Secure Document Viewer • 256-bit Encrypted Object Storage
+        MediVault Secure Document Viewer • 256-bit Encrypted Object Storage
       </div>
     </div>
   );

@@ -190,7 +190,7 @@ export const FlagDetailPage: React.FC = () => {
 
       {/* Non-Diagnostic Disclaimer */}
       <div className="p-4 bg-slate-100 rounded-xl text-[11px] text-slate-600 leading-relaxed">
-        <strong>Important Clinical Notice:</strong> HealthVault flags are strictly rule-based threshold indicators designed to empower patient-physician dialogue. They do not constitute a medical diagnosis, risk prediction, or prescription recommendation.
+        <strong>Important Clinical Notice:</strong> MediVault flags are strictly rule-based threshold indicators designed to empower patient-physician dialogue. They do not constitute a medical diagnosis, risk prediction, or prescription recommendation.
       </div>
     </div>
   );

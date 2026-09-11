@@ -270,7 +270,7 @@ export const ProfilePage: React.FC = () => {
       {/* Logout Confirm Dialog */}
       <ConfirmDialog
         isOpen={showLogoutConfirm}
-        title="Sign Out of HealthVault?"
+        title="Sign Out of MediVault?"
         message="Are you sure you want to sign out? Your demo session data will remain saved on your local device."
         confirmText="Yes, Sign Out"
         cancelText="Stay Signed In"

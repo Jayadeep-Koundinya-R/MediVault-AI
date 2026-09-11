@@ -44,7 +44,7 @@ export async function handleApiRequest(req: IncomingMessage, res: ServerResponse
     let handlerModule: any = null;
     let params: Record<string, string> = {};
 
-    // 1. HealthVault 1.0 Routes
+    // 1. MediVault 1.0 Routes
     if (pathname === '/api/health/ai') {
       handlerModule = await import('../app/api/health/ai/route');
     } else if (pathname === '/api/ai/summary' || pathname === '/api/summary') {
@@ -64,7 +64,7 @@ export async function handleApiRequest(req: IncomingMessage, res: ServerResponse
     } else if (pathname === '/api/export/summary') {
       handlerModule = await import('../app/api/export/summary/route');
     }
-    // 2. HealthVault 2.0 Doctor Routes
+    // 2. MediVault 2.0 Doctor Routes
     else if (pathname === '/api/doctors/search') {
       handlerModule = await import('../app/api/doctors/search/route');
     } else if (pathname === '/api/doctors/profile') {
@@ -84,7 +84,7 @@ export async function handleApiRequest(req: IncomingMessage, res: ServerResponse
     } else if (pathname === '/api/doctor/reviews') {
       handlerModule = await import('../app/api/doctor/reviews/route');
     }
-    // 3. HealthVault 2.0 Family Routes
+    // 3. MediVault 2.0 Family Routes
     else if (pathname === '/api/family') {
       handlerModule = await import('../app/api/family/route');
     } else if (pathname.match(/^\/api\/family\/[^/]+\/permissions$/)) {
@@ -96,7 +96,7 @@ export async function handleApiRequest(req: IncomingMessage, res: ServerResponse
       params = { id: parts[3] };
       handlerModule = await import('../app/api/family/[id]/route');
     }
-    // 4. HealthVault 2.0 Chat & Conversations Routes
+    // 4. MediVault 2.0 Chat & Conversations Routes
     else if (pathname === '/api/conversations') {
       handlerModule = await import('../app/api/conversations/route');
     } else if (pathname.match(/^\/api\/conversations\/[^/]+\/messages$/)) {

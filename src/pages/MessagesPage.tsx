@@ -236,7 +236,7 @@ export const MessagesPage: React.FC = () => {
                   <MessageSquare size={32} className="opacity-20 mb-2" />
                   <p className="text-xs font-semibold">Start your conversation with {activeConv.partnerName}.</p>
                   <p className="text-[11px] text-slate-400 mt-1 max-w-xs">
-                    You can discuss the health records you've shared through HealthVault.
+                    You can discuss the health records you've shared through MediVault.
                   </p>
                 </div>
               ) : (
@@ -302,7 +302,7 @@ export const MessagesPage: React.FC = () => {
             <div className="px-4 py-1.5 bg-amber-50/90 border-t border-amber-200/70 text-[10px] text-amber-900 text-center flex items-center justify-center space-x-1.5">
               <ShieldAlert size={12} className="text-amber-700 shrink-0" />
               <span>
-                HealthVault chat is not an emergency service. For urgent medical concerns, contact appropriate emergency services.
+                MediVault chat is not an emergency service. For urgent medical concerns, contact appropriate emergency services.
               </span>
             </div>
 

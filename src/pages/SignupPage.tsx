@@ -52,7 +52,7 @@ export const SignupPage: React.FC = () => {
           <div className="w-12 h-12 rounded-2xl bg-brand-900 text-white flex items-center justify-center mx-auto mb-3 shadow-clinical-sm">
             <Shield size={26} className="text-cyan-300" />
           </div>
-          <h2 className="font-display font-extrabold text-2xl text-brand-900">Create HealthVault</h2>
+          <h2 className="font-display font-extrabold text-2xl text-brand-900">Create MediVault</h2>
           <p className="text-xs text-slate-500 mt-1">
             Digitize and consolidate your personal health record timeline.
           </p>

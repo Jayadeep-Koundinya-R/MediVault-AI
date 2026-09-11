@@ -38,7 +38,7 @@ export const ResetPasswordPage: React.FC = () => {
           </div>
           <h2 className="font-display font-extrabold text-2xl text-brand-900">Set New Password</h2>
           <p className="text-xs text-slate-500 mt-1">
-            Create a secure password for your HealthVault account.
+            Create a secure password for your MediVault account.
           </p>
         </div>
 

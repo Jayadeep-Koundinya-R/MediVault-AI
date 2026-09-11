@@ -62,7 +62,7 @@ export const DoctorLayout: React.FC = () => {
                 <Stethoscope size={22} />
               </div>
               <div>
-                <h1 className="font-display font-extrabold text-lg text-white leading-none">HealthVault</h1>
+                <h1 className="font-display font-extrabold text-lg text-white leading-none">MediVault</h1>
                 <span className="text-[10px] text-cyan-400 font-semibold tracking-wider uppercase">Clinical Doctor Portal</span>
               </div>
             </div>
@@ -201,7 +201,7 @@ export const DoctorLayout: React.FC = () => {
             <div className="w-8 h-8 rounded-lg bg-cyan-600 flex items-center justify-center">
               <Stethoscope size={18} className="text-white" />
             </div>
-            <span className="font-extrabold text-sm text-white">HealthVault Doctor</span>
+            <span className="font-extrabold text-sm text-white">MediVault Doctor</span>
           </div>
 
           <div className="flex items-center space-x-3">

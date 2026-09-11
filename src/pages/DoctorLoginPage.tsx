@@ -59,7 +59,7 @@ export const DoctorLoginPage: React.FC = () => {
           </div>
           <div className="inline-flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full bg-cyan-50 border border-cyan-200 text-cyan-800 text-[11px] font-bold mb-2">
             <ShieldCheck size={12} className="text-cyan-600" />
-            <span>HealthVault Clinical Portal</span>
+            <span>MediVault Clinical Portal</span>
           </div>
           <h2 className="font-display font-extrabold text-2xl text-slate-900">Doctor Sign In</h2>
           <p className="text-xs text-slate-500 mt-1">
@@ -70,7 +70,7 @@ export const DoctorLoginPage: React.FC = () => {
         {/* Demo Doctor Quick Launch */}
         <div className="mb-6 p-4 rounded-2xl bg-cyan-50/70 border border-cyan-200 text-center">
           <p className="text-xs font-bold text-cyan-950 mb-1">
-            Evaluating HealthVault Doctor Portal?
+            Evaluating MediVault Doctor Portal?
           </p>
           <p className="text-[11px] text-cyan-800 mb-2.5">
             Log in instantly with verified credentials:

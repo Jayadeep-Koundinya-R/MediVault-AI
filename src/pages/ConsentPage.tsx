@@ -36,7 +36,7 @@ export const ConsentPage: React.FC = () => {
         </h2>
 
         <p className="text-xs sm:text-sm text-slate-600 leading-relaxed mb-6">
-          HealthVault stores sensitive personal health records such as prescriptions, diagnostic lab reports, and vaccination cards. Under <strong>India’s Digital Personal Data Protection (DPDP) Act, 2023</strong>, we require your explicit, informed consent prior to ingesting and processing these documents.
+          MediVault stores sensitive personal health records such as prescriptions, diagnostic lab reports, and vaccination cards. Under <strong>India’s Digital Personal Data Protection (DPDP) Act, 2023</strong>, we require your explicit, informed consent prior to ingesting and processing these documents.
         </p>
 
         {/* DPDP Safeguards Box */}
@@ -66,7 +66,7 @@ export const ConsentPage: React.FC = () => {
               className="w-5 h-5 mt-0.5 rounded border-slate-400 text-trust-600 focus:ring-trust-500 cursor-pointer"
             />
             <span className="text-xs sm:text-sm font-semibold text-slate-900 leading-snug">
-              I understand and consent to HealthVault storing my health records for this application under DPDP statutory guidelines.
+              I understand and consent to MediVault storing my health records for this application under DPDP statutory guidelines.
             </span>
           </label>
         </div>

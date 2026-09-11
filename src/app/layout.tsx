@@ -2,7 +2,7 @@ import React from 'react';
 import '../index.css';
 
 export const metadata = {
-  title: 'HealthVault — Clinical Health Record Vault',
+  title: 'MediVault — Clinical Health Record Vault',
   description: 'Next-generation longitudinal digital health record application with AI summarization and deterministic clinical thresholds.',
 };
 

@@ -61,7 +61,7 @@ export const AppLayout: React.FC = () => {
               <Shield size={22} className="text-cyan-300" />
             </div>
             <div>
-              <h1 className="font-display font-extrabold text-lg text-brand-900 leading-tight">HealthVault</h1>
+              <h1 className="font-display font-extrabold text-lg text-brand-900 leading-tight">MediVault</h1>
               <span className="text-[10px] text-slate-500 font-medium block">Digital Health Record</span>
             </div>
           </div>
@@ -235,7 +235,7 @@ export const AppLayout: React.FC = () => {
           logout();
           navigate('/login');
         }}
-        title="Log out of HealthVault?"
+        title="Log out of MediVault?"
         message="Are you sure you want to end your current session? You can sign back in anytime."
         confirmText="Log Out"
         isDestructive={true}

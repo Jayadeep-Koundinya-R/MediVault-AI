@@ -265,7 +265,7 @@ export const DoctorMessagesPage: React.FC = () => {
             <div className="px-4 py-1.5 bg-amber-50/90 border-t border-amber-200/70 text-[10px] text-amber-900 text-center flex items-center justify-center space-x-1.5">
               <ShieldAlert size={12} className="text-amber-700 shrink-0" />
               <span>
-                HealthVault chat is not an emergency service. For urgent medical concerns, contact appropriate emergency services.
+                MediVault chat is not an emergency service. For urgent medical concerns, contact appropriate emergency services.
               </span>
             </div>
 

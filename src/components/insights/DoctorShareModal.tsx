@@ -68,7 +68,7 @@ export const DoctorShareModal: React.FC<DoctorShareModalProps> = ({
     const element = document.createElement('a');
     const file = new Blob([text], { type: 'text/plain;charset=utf-8' });
     element.href = URL.createObjectURL(file);
-    element.download = `HealthVault_Clinical_Summary_${user?.name.replace(/\s+/g, '_')}.txt`;
+    element.download = `MediVault_Clinical_Summary_${user?.name.replace(/\s+/g, '_')}.txt`;
     document.body.appendChild(element);
     element.click();
     document.body.removeChild(element);

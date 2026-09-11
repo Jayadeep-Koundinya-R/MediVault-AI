@@ -457,7 +457,7 @@ export const RecordDetailPage: React.FC = () => {
       <ConfirmDialog
         isOpen={showDeleteConfirm}
         title="Delete Health Record?"
-        message="Are you sure you want to permanently delete this document from your HealthVault? Associated lab trends and risk flags will be recalculated."
+        message="Are you sure you want to permanently delete this document from your MediVault? Associated lab trends and risk flags will be recalculated."
         confirmText="Yes, Delete"
         cancelText="Cancel"
         variant="danger"

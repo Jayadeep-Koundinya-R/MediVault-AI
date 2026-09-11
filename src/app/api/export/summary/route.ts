@@ -53,7 +53,7 @@ export async function POST(request: Request) {
 
     // Format Clinical Brief
     const clinicalBriefText = `=====================================================
-HEALTHVAULT CLINICAL CONSULTATION BRIEF
+MEDIVAULT CLINICAL CONSULTATION BRIEF
 Generated on: ${new Date().toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' })}
 =====================================================
 
@@ -114,7 +114,7 @@ ${
 }
 
 =====================================================
-CONFIDENTIAL MEDICAL SUMMARY - PREPARED VIA HEALTHVAULT
+CONFIDENTIAL MEDICAL SUMMARY - PREPARED VIA MEDIVAULT
 DISCLAIMER: Patient-curated synthesis. Confirm against primary source documentation.
 =====================================================`;
 

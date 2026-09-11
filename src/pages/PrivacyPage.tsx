@@ -24,7 +24,7 @@ export const PrivacyPage: React.FC = () => {
 
   const handleExportAuditLog = () => {
     const auditLog = {
-      dataFiduciary: 'HealthVault Digital Health Solutions Pvt. Ltd.',
+      dataFiduciary: 'MediVault Digital Health Solutions Pvt. Ltd.',
       patientId: user?.id || 'demo_rahul_01',
       abhaId: '91-2345-6789-0123',
       consentTimestamp: user?.consentGivenAt || new Date().toISOString(),
@@ -155,13 +155,13 @@ export const PrivacyPage: React.FC = () => {
 
         <div className="space-y-3 text-xs text-slate-600 leading-relaxed">
           <p>
-            <strong>Statutory Entity:</strong> HealthVault Digital Health Solutions Pvt. Ltd. acting as Data Fiduciary.
+            <strong>Statutory Entity:</strong> MediVault Digital Health Solutions Pvt. Ltd. acting as Data Fiduciary.
           </p>
           <p>
             <strong>Explicit Purpose Limitation:</strong> Health data provided is utilized exclusively for personal health tracking, clinical trend visualization, and user-initiated doctor consultations.
           </p>
           <p>
-            <strong>Zero Commercialization Guarantee:</strong> HealthVault maintains a strict architectural barrier preventing any sale, licensing, or sharing of clinical records with third-party pharmaceutical advertisers or insurance underwriters.
+            <strong>Zero Commercialization Guarantee:</strong> MediVault maintains a strict architectural barrier preventing any sale, licensing, or sharing of clinical records with third-party pharmaceutical advertisers or insurance underwriters.
           </p>
           <p>
             <strong>Encryption Standard:</strong> All stored documents are encrypted at rest using AES-256 and transmitted exclusively over TLS 1.3 tunnels with certificate pinning.

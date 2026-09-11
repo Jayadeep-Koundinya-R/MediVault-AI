@@ -27,7 +27,7 @@ export const WelcomePage: React.FC = () => {
             <Shield size={22} className="text-cyan-300" />
           </div>
           <div>
-            <h1 className="font-display font-extrabold text-xl text-brand-900 leading-none">HealthVault</h1>
+            <h1 className="font-display font-extrabold text-xl text-brand-900 leading-none">MediVault</h1>
             <span className="text-[10px] text-slate-500 font-medium">Digital Health Record · Family &amp; Clinical Portal</span>
           </div>
         </div>
@@ -184,7 +184,7 @@ export const WelcomePage: React.FC = () => {
 
       {/* Footer */}
       <footer className="max-w-6xl w-full mx-auto py-6 border-t border-slate-200 text-center text-xs text-slate-400">
-        <p>HealthVault 2.0 • Digital Health Record Application • Devert-a-thon Healthcare Technology</p>
+        <p>MediVault 2.0 • Digital Health Record Application • Devert-a-thon Healthcare Technology</p>
       </footer>
     </div>
   );

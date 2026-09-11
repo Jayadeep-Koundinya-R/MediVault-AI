@@ -57,7 +57,7 @@ export const SettingsPage: React.FC = () => {
     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(records, null, 2));
     const downloadAnchor = document.createElement('a');
     downloadAnchor.setAttribute("href", dataStr);
-    downloadAnchor.setAttribute("download", "healthvault_records_backup.json");
+    downloadAnchor.setAttribute("download", "medivault_records_backup.json");
     document.body.appendChild(downloadAnchor);
     downloadAnchor.click();
     downloadAnchor.remove();
@@ -292,12 +292,12 @@ export const SettingsPage: React.FC = () => {
         </div>
       </Card>
 
-      {/* ABOUT HEALTHVAULT */}
+      {/* ABOUT MEDIVAULT */}
       <div className="bg-white border border-slate-200 rounded-xl p-5 text-xs text-slate-600 space-y-2">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 font-bold text-slate-900">
             <ShieldCheck className="w-4 h-4 text-teal-700" />
-            HealthVault &bull; Digital Health Record System
+            MediVault &bull; Digital Health Record System
           </div>
           <span className="font-mono text-[11px] text-slate-400">v1.0.0 (DVPS24)</span>
         </div>

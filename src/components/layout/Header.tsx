@@ -132,9 +132,9 @@ export const Header: React.FC = () => {
         {/* Mobile Header Title */}
         <div className="flex md:hidden items-center space-x-2">
           <div className="w-8 h-8 rounded-lg bg-brand-900 text-white flex items-center justify-center font-bold text-sm shadow-clinical-sm">
-            HV
+            MV
           </div>
-          <span className="font-extrabold text-base tracking-tight text-brand-900">HealthVault</span>
+          <span className="font-extrabold text-base tracking-tight text-brand-900">MediVault</span>
         </div>
       </div>
 

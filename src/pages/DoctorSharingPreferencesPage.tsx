@@ -229,7 +229,7 @@ export const DoctorSharingPreferencesPage: React.FC = () => {
                 Remove access?
               </h3>
               <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                This doctor will no longer be able to view the health information you shared through HealthVault.
+                This doctor will no longer be able to view the health information you shared through MediVault.
               </p>
             </div>
             <div className="flex items-center space-x-2 pt-2">

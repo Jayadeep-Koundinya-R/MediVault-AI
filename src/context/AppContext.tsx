@@ -263,7 +263,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const logout = () => {
     authService.logout();
     setUser(null);
-    addToast('Logged out of HealthVault', 'info');
+    addToast('Logged out of MediVault', 'info');
   };
 
   const resetPassword = async (email: string) => {

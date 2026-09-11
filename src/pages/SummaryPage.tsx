@@ -179,7 +179,7 @@ export const SummaryPage: React.FC = () => {
             </h4>
             <p className="text-amber-800 mt-1 leading-relaxed">
               This summary is synthesized algorithmically from user-uploaded records solely to assist clinical conversations with certified medical professionals. 
-              <strong> HealthVault does not provide automated diagnosis, disease predictions, or replace professional clinical judgment.</strong> Always consult your registered physician regarding symptoms or treatment modifications.
+              <strong> MediVault does not provide automated diagnosis, disease predictions, or replace professional clinical judgment.</strong> Always consult your registered physician regarding symptoms or treatment modifications.
             </p>
           </div>
         </div>

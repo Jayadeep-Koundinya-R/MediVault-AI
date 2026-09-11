@@ -160,7 +160,7 @@ export interface FilterState {
 }
 
 // ----------------------------------------------------
-// HealthVault 2.0 Types: Doctor, Family, Chat, Perms
+// MediVault 2.0 Types: Doctor, Family, Chat, Perms
 // ----------------------------------------------------
 
 export interface DoctorProfile {

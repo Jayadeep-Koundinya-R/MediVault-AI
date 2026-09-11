@@ -134,7 +134,7 @@ export async function generateDynamicHealthSummary(context: {
     throw new Error(`AI summarization unavailable: Local Ollama is not accessible at ${OLLAMA_BASE_URL}`);
   }
 
-  const systemPrompt = `You are HealthVault's clinical AI assistant.
+  const systemPrompt = `You are MediVault's clinical AI assistant.
 Your role is to analyze a patient's verified health records and produce a clear, accurate, objective health summary and longitudinal trend analysis for the patient.
 
 RULES:

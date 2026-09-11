@@ -305,7 +305,7 @@ export const UploadFlowPage: React.FC = () => {
       {step === 'type' && (
         <div className="space-y-6 animate-fadeIn">
           <p className="text-sm text-slate-600">
-            Categorizing your document ensures HealthVault accurately extracts medical parameters and maintains timeline integrity.
+            Categorizing your document ensures MediVault accurately extracts medical parameters and maintains timeline integrity.
           </p>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -1078,7 +1078,7 @@ export const UploadFlowPage: React.FC = () => {
                         icon={<CheckCircle2 className="w-4 h-4" />}
                         onClick={handleSave}
                       >
-                        Save to HealthVault
+                        Save to MediVault
                       </Button>
                     </div>
                   </div>

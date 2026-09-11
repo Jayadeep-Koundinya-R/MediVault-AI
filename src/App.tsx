@@ -32,7 +32,7 @@ import ProfilePage from './pages/ProfilePage';
 import SettingsPage from './pages/SettingsPage';
 import PrivacyPage from './pages/PrivacyPage';
 
-// New HealthVault 2.0 Patient Pages
+// New MediVault 2.0 Patient Pages
 import { TrustedDoctorsPage } from './pages/TrustedDoctorsPage';
 import { FindDoctorPage } from './pages/FindDoctorPage';
 import { DoctorSharingPreferencesPage } from './pages/DoctorSharingPreferencesPage';
@@ -41,7 +41,7 @@ import { FamilyMemberDetailPage } from './pages/FamilyMemberDetailPage';
 import { MessagesPage } from './pages/MessagesPage';
 import { AccessManagementPage } from './pages/AccessManagementPage';
 
-// New HealthVault 2.0 Doctor Portal Pages
+// New MediVault 2.0 Doctor Portal Pages
 import { DoctorDashboardPage } from './pages/doctor/DoctorDashboardPage';
 import { DoctorPatientsPage } from './pages/doctor/DoctorPatientsPage';
 import { DoctorPatientDetailPage } from './pages/doctor/DoctorPatientDetailPage';
@@ -147,7 +147,7 @@ export const App: React.FC = () => {
           <Route path="settings/access" element={<AccessManagementPage />} />
           <Route path="privacy" element={<PrivacyPage />} />
 
-          {/* HealthVault 2.0 Patient Features */}
+          {/* MediVault 2.0 Patient Features */}
           <Route path="doctors" element={<TrustedDoctorsPage />} />
           <Route path="doctors/find" element={<FindDoctorPage />} />
           <Route path="doctors/:id/sharing" element={<DoctorSharingPreferencesPage />} />

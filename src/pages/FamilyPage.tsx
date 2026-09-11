@@ -342,7 +342,7 @@ export const FamilyPage: React.FC = () => {
               {addMode === 'invite' && (
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    HealthVault Account Email
+                    MediVault Account Email
                   </label>
                   <input
                     type="email"

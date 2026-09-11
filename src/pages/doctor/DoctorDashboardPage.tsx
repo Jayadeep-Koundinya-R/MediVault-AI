@@ -77,7 +77,7 @@ export const DoctorDashboardPage: React.FC = () => {
         <div>
           <div className="inline-flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 text-xs font-semibold mb-2">
             <ShieldCheck size={13} />
-            <span>HealthVault Clinical Workspace</span>
+            <span>MediVault Clinical Workspace</span>
           </div>
           <h1 className="font-display font-extrabold text-2xl sm:text-3xl text-white">
             Good morning, {doctorName}

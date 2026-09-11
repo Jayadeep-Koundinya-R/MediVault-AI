@@ -64,7 +64,7 @@ export const LoginPage: React.FC = () => {
         {/* Demo Account Button */}
         <div className="mb-6 p-4 rounded-2xl bg-brand-50/70 border border-brand-200/80 text-center">
           <p className="text-xs font-semibold text-brand-900 mb-2">
-            Evaluating HealthVault for Devert-a-thon?
+            Evaluating MediVault?
           </p>
           <Button
             type="button"
