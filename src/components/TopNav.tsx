@@ -1,6 +1,7 @@
-import React from 'react';
-import { Search, Plus, ShieldCheck, Bell } from 'lucide-react';
+import React, { useState } from 'react';
+import { Search, Plus, ShieldCheck, Bell, Sparkles, Activity, Volume2, VolumeX } from 'lucide-react';
 import { User } from '../types';
+import { soundFX } from '../utils/audioEffects';
 
 interface TopNavProps {
   user: User;
@@ -8,6 +9,8 @@ interface TopNavProps {
   setSearchQuery: (q: string) => void;
   onOpenUpload: () => void;
   onOpenConsent: () => void;
+  onOpenHologram: () => void;
+  onOpenCopilot: () => void;
   unreadAlertCount: number;
   onAlertClick: () => void;
 }
@@ -18,9 +21,20 @@ export const TopNav: React.FC<TopNavProps> = ({
   setSearchQuery,
   onOpenUpload,
   onOpenConsent,
+  onOpenHologram,
+  onOpenCopilot,
   unreadAlertCount,
   onAlertClick,
 }) => {
+  const [audioEnabled, setAudioEnabled] = useState(true);
+
+  const toggleSound = () => {
+    const next = !audioEnabled;
+    setAudioEnabled(next);
+    soundFX.enabled = next;
+    if (next) soundFX.playChime();
+  };
+
   return (
     <header className="top-nav">
       <div className="top-nav-left">
@@ -55,24 +69,108 @@ export const TopNav: React.FC<TopNavProps> = ({
           />
         </div>
 
+        {/* 3D Organ Vitals Button */}
+        <button
+          id="btn-open-3d-hologram"
+          onClick={() => {
+            soundFX.playChime();
+            onOpenHologram();
+          }}
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '6px',
+            background: 'linear-gradient(135deg, #06B6D4 0%, #3B82F6 100%)',
+            color: '#FFFFFF',
+            fontSize: '12.5px',
+            fontWeight: 700,
+            padding: '0 15px',
+            height: '42px',
+            borderRadius: '9999px',
+            border: 'none',
+            cursor: 'pointer',
+            boxShadow: '0 4px 14px rgba(6, 182, 212, 0.3)',
+            transition: 'all 0.2s ease',
+          }}
+          title="Open interactive 3D biological vitals hologram"
+        >
+          <Activity size={15} />
+          <span>3D Vitals</span>
+        </button>
+
+        {/* AI Copilot Button */}
+        <button
+          id="btn-open-ai-copilot"
+          onClick={() => {
+            soundFX.playChime();
+            onOpenCopilot();
+          }}
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '6px',
+            background: 'linear-gradient(135deg, #7B73F6 0%, #4F46E5 100%)',
+            color: '#FFFFFF',
+            fontSize: '12.5px',
+            fontWeight: 700,
+            padding: '0 16px',
+            height: '42px',
+            borderRadius: '9999px',
+            border: 'none',
+            cursor: 'pointer',
+            boxShadow: '0 4px 14px rgba(123, 115, 246, 0.35)',
+            transition: 'all 0.2s ease',
+          }}
+          title="Open AI Medical Copilot"
+        >
+          <Sparkles size={15} />
+          <span>AI Copilot</span>
+        </button>
+
         {/* Upload Action CTA */}
         <button 
           id="btn-open-upload"
           className="btn-upload-primary" 
-          onClick={onOpenUpload}
+          onClick={() => {
+            soundFX.playChime();
+            onOpenUpload();
+          }}
         >
           <Plus size={16} strokeWidth={3} />
           <span>Upload Document</span>
         </button>
 
+        {/* Audio Toggle */}
+        <button
+          onClick={toggleSound}
+          style={{
+            width: '40px',
+            height: '40px',
+            borderRadius: '50%',
+            background: '#FFFFFF',
+            border: '1px solid #E5EAF3',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer',
+            color: audioEnabled ? '#4F46E5' : '#94A3B8',
+          }}
+          title={audioEnabled ? 'Sound Effects Active' : 'Sound Muted'}
+        >
+          {audioEnabled ? <Volume2 size={17} /> : <VolumeX size={17} />}
+        </button>
+
         {/* Notification Alert Bell */}
         <button
           id="btn-alert-bell"
-          onClick={onAlertClick}
+          onClick={() => {
+            soundFX.playAlertPulse();
+            onAlertClick();
+          }}
           style={{
             position: 'relative',
-            width: '42px',
-            height: '42px',
+            width: '40px',
+            height: '40px',
             borderRadius: '50%',
             background: '#FFFFFF',
             border: '1px solid #E5EAF3',
@@ -84,7 +182,7 @@ export const TopNav: React.FC<TopNavProps> = ({
           }}
           title={`${unreadAlertCount} unacknowledged clinical risk flag`}
         >
-          <Bell size={18} />
+          <Bell size={17} />
           {unreadAlertCount > 0 && (
             <span
               style={{

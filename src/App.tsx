@@ -8,6 +8,12 @@ import { UploadModal } from './components/UploadModal';
 import { RecordDetailModal } from './components/RecordDetailModal';
 import { AISummaryModal } from './components/AISummaryModal';
 import { ConsentModal } from './components/ConsentBanner';
+import { ThreeCanvasBackground } from './components/ThreeCanvasBackground';
+import { TiltCard } from './components/TiltCard';
+import { TimeTravelScrubber, timeMilestones } from './components/TimeTravelScrubber';
+import { OrganHologramModal } from './components/OrganHologramModal';
+import { AICopilotDrawer } from './components/AICopilotDrawer';
+import { soundFX } from './utils/audioEffects';
 
 import {
   currentUser,
@@ -25,6 +31,7 @@ export function App() {
   const [activeNav, setActiveNav] = useState('timeline');
   const [currentFilter, setCurrentFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [timeIndex, setTimeIndex] = useState(timeMilestones.length - 1);
 
   // Data state
   const [documents, setDocuments] = useState<HealthDocument[]>(initialDocuments);
@@ -37,6 +44,8 @@ export function App() {
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [isSummaryOpen, setIsSummaryOpen] = useState(false);
   const [isConsentOpen, setIsConsentOpen] = useState(false);
+  const [isHologramOpen, setIsHologramOpen] = useState(false);
+  const [isCopilotOpen, setIsCopilotOpen] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState<TimelineItem | null>(null);
 
   // Compute timeline items
@@ -44,11 +53,17 @@ export function App() {
     return buildTimelineItems(prescriptions, labResults, vaccinations, documents, riskFlags);
   }, [prescriptions, labResults, vaccinations, documents, riskFlags]);
 
+  // Apply Time-Travel filter
+  const timeScrubbedItems = useMemo(() => {
+    const cutoffDate = timeMilestones[timeIndex]?.date || '2099-12-31';
+    return rawTimelineItems.filter((item) => item.date <= cutoffDate);
+  }, [rawTimelineItems, timeIndex]);
+
   // Apply search query filtering
   const timelineItems = useMemo(() => {
-    if (!searchQuery.trim()) return rawTimelineItems;
+    if (!searchQuery.trim()) return timeScrubbedItems;
     const q = searchQuery.toLowerCase();
-    return rawTimelineItems.filter(
+    return timeScrubbedItems.filter(
       (item) =>
         item.title.toLowerCase().includes(q) ||
         item.subtitle.toLowerCase().includes(q) ||
@@ -56,7 +71,7 @@ export function App() {
         item.valueDisplay.toLowerCase().includes(q) ||
         (item.referenceRange && item.referenceRange.toLowerCase().includes(q))
     );
-  }, [rawTimelineItems, searchQuery]);
+  }, [timeScrubbedItems, searchQuery]);
 
   // Handle new record from Upload Modal
   const handleSaveRecord = (
@@ -69,7 +84,6 @@ export function App() {
       const lab = payload as LabResult;
       setLabResults((prev) => [lab, ...prev]);
 
-      // Trigger clinical rule check (PRD: Threshold-based Risk Flags)
       if (lab.testName.toLowerCase().includes('glucose') && lab.value >= 126) {
         const newFlag: RiskFlag = {
           flagId: `flag_${Date.now()}`,
@@ -82,17 +96,20 @@ export function App() {
           acknowledged: false,
         };
         setRiskFlags((prev) => [newFlag, ...prev]);
+        soundFX.playAlertPulse();
       }
     } else if (newDoc.type === 'prescription') {
       setPrescriptions((prev) => [payload as Prescription, ...prev]);
     } else if (newDoc.type === 'vaccination') {
       setVaccinations((prev) => [payload as Vaccination, ...prev]);
     }
+
+    // Reset time-travel to present so new record is immediately visible
+    setTimeIndex(timeMilestones.length - 1);
   };
 
   // Handle manual correction edit in Record Detail Modal
   const handleUpdateRecordValue = (id: string, newValue: string) => {
-    // Check if it's a lab result
     const labId = id.replace('item_', '');
     const labMatch = labResults.find((l) => l.labResultId === labId);
     if (labMatch) {
@@ -110,7 +127,6 @@ export function App() {
       return;
     }
 
-    // Check if prescription
     const rxMatch = prescriptions.find((r) => r.prescriptionId === labId);
     if (rxMatch) {
       setPrescriptions((prev) =>
@@ -144,7 +160,10 @@ export function App() {
 
   return (
     <div className="app-container">
-      {/* Sidebar Navigation matching Flat-21 Dribbble design */}
+      {/* 3D Hardware-Accelerated Three.js Particle & DNA Background */}
+      <ThreeCanvasBackground />
+
+      {/* Sidebar Navigation */}
       <Sidebar
         activeTab={activeNav}
         setActiveTab={handleSidebarNav}
@@ -152,7 +171,7 @@ export function App() {
       />
 
       {/* Main Content Area */}
-      <main className="app-main">
+      <main className="app-main" style={{ position: 'relative', zIndex: 10 }}>
         {/* Top Bar Header */}
         <TopNav
           user={currentUser}
@@ -160,27 +179,39 @@ export function App() {
           setSearchQuery={setSearchQuery}
           onOpenUpload={() => setIsUploadOpen(true)}
           onOpenConsent={() => setIsConsentOpen(true)}
+          onOpenHologram={() => setIsHologramOpen(true)}
+          onOpenCopilot={() => setIsCopilotOpen(true)}
           unreadAlertCount={unreadAlerts}
           onAlertClick={() => setCurrentFilter('flagged')}
         />
 
-        {/* Dashboard Grid (Donut Metrics + Longitudinal Trend Area Chart) */}
+        {/* Dashboard Grid (3D Tilt Cards) */}
         <div className="dashboard-grid">
-          {/* Left Column: Donut Gauges & Pillar Indicators */}
-          <StatsCards
-            timelineItems={rawTimelineItems}
-            riskFlags={riskFlags}
-            onFilterFlagged={() => setCurrentFilter('flagged')}
-          />
+          {/* Left Column: Donut Gauges & Pillar Indicators wrapped in 3D Tilt */}
+          <TiltCard maxTilt={5}>
+            <StatsCards
+              timelineItems={timeScrubbedItems}
+              riskFlags={riskFlags}
+              onFilterFlagged={() => setCurrentFilter('flagged')}
+            />
+          </TiltCard>
 
-          {/* Right Column: Central Biomarker Trend & Forecast with Floating AI Card */}
-          <BiomarkerTrendChart
-            onOpenSummaryModal={() => setIsSummaryOpen(true)}
-            onOpenFlagDetails={() => setCurrentFilter('flagged')}
-          />
+          {/* Right Column: Central Biomarker Trend & Forecast wrapped in 3D Tilt */}
+          <TiltCard maxTilt={4}>
+            <BiomarkerTrendChart
+              onOpenSummaryModal={() => setIsSummaryOpen(true)}
+              onOpenFlagDetails={() => setCurrentFilter('flagged')}
+            />
+          </TiltCard>
         </div>
 
-        {/* Consolidated Medical Records Timeline Table (Matching Flat-21 "Sales Orders") */}
+        {/* Novel Feature: Longitudinal Time-Travel Health Scrubber */}
+        <TimeTravelScrubber
+          currentDateIndex={timeIndex}
+          onDateChange={(idx) => setTimeIndex(idx)}
+        />
+
+        {/* Consolidated Medical Records Timeline Table */}
         <RecordsTimeline
           items={timelineItems}
           currentFilter={currentFilter}
@@ -209,6 +240,21 @@ export function App() {
         onClose={() => setIsSummaryOpen(false)}
         summary={initialAISummary}
         riskFlags={riskFlags}
+      />
+
+      {/* 3D Biological Organ & Vitals Hologram Modal */}
+      <OrganHologramModal
+        isOpen={isHologramOpen}
+        onClose={() => setIsHologramOpen(false)}
+        onSelectOrganFilter={(filter) => setCurrentFilter(filter)}
+      />
+
+      {/* AI Clinical Copilot Drawer */}
+      <AICopilotDrawer
+        isOpen={isCopilotOpen}
+        onClose={() => setIsCopilotOpen(false)}
+        onOpenRecord={(item) => setSelectedRecord(item)}
+        timelineItems={rawTimelineItems}
       />
 
       {/* DPDP Act 2023 Consent Modal */}
