@@ -146,8 +146,20 @@ export const RecordsTimeline: React.FC<RecordsTimelineProps> = ({
             <tbody>
               {filteredItems.length === 0 ? (
                 <tr>
-                  <td colSpan={8} style={{ textAlign: 'center', padding: '36px', color: 'var(--text-secondary)' }}>
-                    No records match the selected filter.
+                  <td colSpan={8} style={{ textAlign: 'center', padding: '54px 20px', color: 'var(--text-secondary)' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
+                      <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: '#F1F5F9', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748B' }}>
+                        <FileText size={24} />
+                      </div>
+                      <div style={{ fontWeight: 700, fontSize: '15px', color: 'var(--text-primary)' }}>
+                        {items.length === 0 ? 'Your Health Vault is Empty' : 'No records match the selected filter'}
+                      </div>
+                      <div style={{ fontSize: '13px', color: 'var(--text-secondary)', maxWidth: '380px', lineHeight: 1.5 }}>
+                        {items.length === 0
+                          ? 'Upload medical prescriptions, blood test reports, or vaccination cards across hospitals to build your consolidated timeline.'
+                          : 'Try selecting "All Records" or clearing your search term to see previous documents.'}
+                      </div>
+                    </div>
                   </td>
                 </tr>
               ) : (

@@ -7,6 +7,14 @@ export interface User {
   createdAt: string; // ISO timestamp
 }
 
+export interface PatientProfile extends User {
+  relationship: 'self' | 'mother' | 'father' | 'child' | 'spouse';
+  gender: 'Male' | 'Female' | 'Other';
+  bloodGroup?: string;
+  allergies?: string[];
+  emergencyContact?: string;
+}
+
 export type DocumentType = 'prescription' | 'lab_report' | 'vaccination';
 export type OcrStatus = 'pending' | 'success' | 'low_confidence' | 'failed';
 
@@ -102,3 +110,96 @@ export type TimelineItem = {
   document: HealthDocument;
   rawPayload: Prescription | LabResult | Vaccination;
 };
+
+// Doctor Consultation & Review Queue Types
+export interface Doctor {
+  doctorId: string;
+  name: string;
+  specialty: string;
+  hospital: string;
+  licenseNumber: string;
+  experienceYears: number;
+  rating: number;
+  reviewCount: number;
+  consultationFee: number;
+  isPartner: boolean;
+  availableNow: boolean;
+  avatarUrl?: string;
+  bio?: string;
+}
+
+export interface TriageResponse {
+  question: string;
+  answer: string;
+}
+
+export type ConsultationStatus = 'waiting_review' | 'in_consultation' | 'completed';
+export type ConsultationUrgency = 'high' | 'moderate' | 'routine';
+
+export interface Consultation {
+  consultationId: string;
+  userId: string;
+  patientName: string;
+  doctorId: string;
+  doctorName: string;
+  status: ConsultationStatus;
+  urgency: ConsultationUrgency;
+  flaggedSummary: string;
+  relatedDocumentIds: string[];
+  triageResponses: TriageResponse[];
+  doctorClinicalNote?: string;
+  recommendedFollowUpDate?: string;
+  negotiatedPlan?: string;
+  rating?: number;
+  createdAt: string;
+  completedAt?: string;
+}
+
+export interface ChatMessage {
+  messageId: string;
+  consultationId: string;
+  sender: 'patient' | 'doctor' | 'system';
+  text: string;
+  timestamp: string;
+  attachments?: string[];
+}
+
+// Retention Notifications
+export type NotificationType =
+  | 'follow_up'
+  | 'risk_flag'
+  | 'medicine_reminder'
+  | 'vaccine_due'
+  | 'inactivity'
+  | 'doctor_message';
+
+export interface AppNotification {
+  notificationId: string;
+  userId: string;
+  type: NotificationType;
+  title: string;
+  body: string;
+  date: string;
+  read: boolean;
+  actionUrl?: string;
+}
+
+// Monetization & Plans
+export type PlanId = 'free' | 'patient_pro' | 'family_vault' | 'pay_per_consult';
+
+export interface SubscriptionPlan {
+  id: PlanId;
+  name: string;
+  price: string;
+  period: string;
+  description: string;
+  popular?: boolean;
+  features: string[];
+}
+
+export interface DoctorEarnings {
+  totalEarned: number;
+  pendingPayout: number;
+  completedReviews: number;
+  currency: string;
+}

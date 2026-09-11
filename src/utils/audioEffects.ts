@@ -101,6 +101,11 @@ class SoundFX {
     }
   }
 
+  // Soft click
+  public playClick() {
+    this.playTick();
+  }
+
   // Clinical alert pulse
   public playAlertPulse() {
     if (!this.enabled) return;

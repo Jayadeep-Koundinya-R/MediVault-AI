@@ -15,6 +15,9 @@ function App() {
         <Route path="/labs" element={<DashboardLayout initialTab="labs" />} />
         <Route path="/prescriptions" element={<DashboardLayout initialTab="prescriptions" />} />
         <Route path="/vaccinations" element={<DashboardLayout initialTab="vaccinations" />} />
+        <Route path="/consultations" element={<DashboardLayout initialTab="consultations" />} />
+        <Route path="/doctor-portal" element={<DashboardLayout initialTab="doctor-portal" />} />
+        <Route path="/pricing" element={<DashboardLayout initialTab="pricing" />} />
         <Route path="/settings" element={<DashboardLayout initialTab="settings" />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

@@ -1,37 +1,86 @@
-import React, { useState } from 'react';
-import { FileText, TrendingUp, TrendingDown, AlertTriangle, CheckCircle2, Eye, Minus } from 'lucide-react';
-import { initialLabResults, initialRiskFlags } from '../data/mockHealthData';
+import React, { useState, useMemo } from 'react';
+import {
+  FileText,
+  TrendingUp,
+  TrendingDown,
+  AlertTriangle,
+  CheckCircle2,
+  Eye,
+  Minus,
+  Plus,
+  Search,
+} from 'lucide-react';
+import { LabResult, RiskFlag, HealthDocument, TimelineItem } from '../types';
+import { soundFX } from '../utils/audioEffects';
 
 interface LabReportsPageProps {
-  onSelectRecord?: (item: any) => void;
+  labs: LabResult[];
+  riskFlags: RiskFlag[];
+  documents: HealthDocument[];
+  onSelectRecord: (item: TimelineItem) => void;
+  onOpenUpload: () => void;
 }
 
-export const LabReportsPage: React.FC<LabReportsPageProps> = ({ onSelectRecord }) => {
+export const LabReportsPage: React.FC<LabReportsPageProps> = ({
+  labs,
+  riskFlags,
+  documents,
+  onSelectRecord,
+  onOpenUpload,
+}) => {
   const [sortBy, setSortBy] = useState<'date' | 'name' | 'status'>('date');
+  const [categoryFilter, setCategoryFilter] = useState<'all' | 'metabolic' | 'lipid' | 'renal'>('all');
+  const [searchQuery, setSearchQuery] = useState('');
 
-  const labs = [...initialLabResults].sort((a, b) => {
-    if (sortBy === 'date') return b.testDate.localeCompare(a.testDate);
-    if (sortBy === 'name') return a.testName.localeCompare(b.testName);
-    // status: flagged first
-    const aFlag = initialRiskFlags.find(f => f.labResultId === a.labResultId);
-    const bFlag = initialRiskFlags.find(f => f.labResultId === b.labResultId);
-    return (bFlag ? 1 : 0) - (aFlag ? 1 : 0);
-  });
+  // Filter by category and search query
+  const filteredLabs = useMemo(() => {
+    return labs.filter((lab) => {
+      const q = searchQuery.toLowerCase();
+      const matchesSearch =
+        !q ||
+        lab.testName.toLowerCase().includes(q) ||
+        (lab.sourceLab && lab.sourceLab.toLowerCase().includes(q));
 
-  // Group labs by test name for trend mini-charts
-  const testGroups: Record<string, typeof initialLabResults> = {};
-  initialLabResults.forEach(lab => {
-    if (!testGroups[lab.testName]) testGroups[lab.testName] = [];
-    testGroups[lab.testName].push(lab);
-  });
+      if (!matchesSearch) return false;
 
-  const getStatusBadge = (lab: typeof initialLabResults[0]) => {
-    const flag = initialRiskFlags.find(f => f.labResultId === lab.labResultId);
+      if (categoryFilter === 'all') return true;
+      const n = lab.testName.toLowerCase();
+      if (categoryFilter === 'metabolic') return n.includes('glucose') || n.includes('hba1c') || n.includes('sugar');
+      if (categoryFilter === 'lipid') return n.includes('cholesterol') || n.includes('triglyceride') || n.includes('lipid');
+      if (categoryFilter === 'renal') return n.includes('creatinine') || n.includes('urea') || n.includes('bun');
+      return true;
+    });
+  }, [labs, categoryFilter, searchQuery]);
+
+  // Sort labs
+  const sortedLabs = useMemo(() => {
+    return [...filteredLabs].sort((a, b) => {
+      if (sortBy === 'date') return b.testDate.localeCompare(a.testDate);
+      if (sortBy === 'name') return a.testName.localeCompare(b.testName);
+      // Risk status: flagged first
+      const aFlag = riskFlags.find((f) => f.labResultId === a.labResultId);
+      const bFlag = riskFlags.find((f) => f.labResultId === b.labResultId);
+      return (bFlag ? 1 : 0) - (aFlag ? 1 : 0);
+    });
+  }, [filteredLabs, sortBy, riskFlags]);
+
+  // Group labs by test name for trend detection
+  const testGroups = useMemo(() => {
+    const groups: Record<string, LabResult[]> = {};
+    labs.forEach((lab) => {
+      if (!groups[lab.testName]) groups[lab.testName] = [];
+      groups[lab.testName].push(lab);
+    });
+    return groups;
+  }, [labs]);
+
+  const getStatusBadge = (lab: LabResult) => {
+    const flag = riskFlags.find((f) => f.labResultId === lab.labResultId);
     if (flag) {
       return (
         <span className="status-pill flag-high">
           <AlertTriangle size={12} />
-          <span>{flag.severity === 'high' ? 'Flagged' : 'Borderline'}</span>
+          <span>{flag.severity === 'high' ? 'Clinical Flag' : 'Borderline'}</span>
         </span>
       );
     }
@@ -62,23 +111,64 @@ export const LabReportsPage: React.FC<LabReportsPageProps> = ({ onSelectRecord }
     return <Minus size={14} color="#94A3B8" />;
   };
 
+  const handleRowClick = (lab: LabResult) => {
+    soundFX.playClick();
+    const doc = documents.find((d) => d.documentId === lab.documentId) || {
+      documentId: lab.documentId,
+      userId: lab.userId,
+      type: 'lab_report',
+      imageUrl: 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&w=800&q=80',
+      uploadedAt: lab.testDate,
+      ocrStatus: 'success',
+      confidenceScore: 97.4,
+      rawOcrText: `LABORATORY REPORT: ${lab.testName}\nValue: ${lab.value} ${lab.unit}\nDate: ${lab.testDate}\nFacility: ${lab.sourceLab}`,
+    };
+
+    const flag = riskFlags.find((f) => f.labResultId === lab.labResultId);
+
+    const item: TimelineItem = {
+      id: `item_${lab.labResultId}`,
+      documentId: lab.documentId,
+      type: 'lab_report',
+      title: lab.testName,
+      subtitle: `${lab.sourceLab || 'Diagnostic Lab'} · Verified`,
+      date: lab.testDate,
+      sourceFacility: lab.sourceLab || 'Diagnostic Lab',
+      valueDisplay: `${lab.value} ${lab.unit}`,
+      referenceRange: lab.referenceRangeLow && lab.referenceRangeHigh ? `${lab.referenceRangeLow} - ${lab.referenceRangeHigh} ${lab.unit}` : undefined,
+      isFlagged: Boolean(flag),
+      flagSeverity: flag?.severity,
+      flagRule: flag?.thresholdDescription,
+      manuallyCorrected: lab.manuallyCorrected,
+      ocrConfidence: doc.confidenceScore || 96,
+      document: doc,
+      rawPayload: lab,
+    };
+
+    onSelectRecord(item);
+  };
+
   return (
     <div className="page-content">
       {/* Page Header */}
       <div className="page-header">
         <div>
-          <h2 className="page-title">Lab Reports</h2>
-          <p className="page-subtitle">All laboratory test results extracted from scanned documents across hospitals</p>
+          <h2 className="page-title">Lab Reports & Blood Panels</h2>
+          <p className="page-subtitle">
+            All laboratory test results parsed via OCR from scanned documents across hospitals
+          </p>
         </div>
         <div className="page-header-actions">
-          <div className="sort-dropdown">
-            <label>Sort by:</label>
-            <select value={sortBy} onChange={(e) => setSortBy(e.target.value as any)}>
-              <option value="date">Date (Latest)</option>
-              <option value="name">Test Name</option>
-              <option value="status">Risk Status</option>
-            </select>
-          </div>
+          <button
+            className="btn-primary"
+            onClick={() => {
+              soundFX.playChime();
+              onOpenUpload();
+            }}
+          >
+            <Plus size={16} style={{ display: 'inline', marginRight: '6px' }} />
+            <span>Upload Lab Report</span>
+          </button>
         </div>
       </div>
 
@@ -86,153 +176,249 @@ export const LabReportsPage: React.FC<LabReportsPageProps> = ({ onSelectRecord }
       <div className="lab-stats-row">
         <div className="lab-stat-card">
           <div className="lab-stat-value">{labs.length}</div>
-          <div className="lab-stat-label">Total Tests</div>
+          <div className="lab-stat-label">Total Tests Extracted</div>
         </div>
         <div className="lab-stat-card">
           <div className="lab-stat-value" style={{ color: '#DC2626' }}>
-            {labs.filter(l => initialRiskFlags.some(f => f.labResultId === l.labResultId)).length}
+            {labs.filter((l) => riskFlags.some((f) => f.labResultId === l.labResultId)).length}
           </div>
-          <div className="lab-stat-label">Flagged</div>
+          <div className="lab-stat-label">Clinical Flags (ADA/WHO)</div>
         </div>
         <div className="lab-stat-card">
           <div className="lab-stat-value" style={{ color: '#10B981' }}>
-            {labs.filter(l => !initialRiskFlags.some(f => f.labResultId === l.labResultId)).length}
+            {labs.filter((l) => !riskFlags.some((f) => f.labResultId === l.labResultId)).length}
           </div>
-          <div className="lab-stat-label">Normal</div>
+          <div className="lab-stat-label">Within Target Range</div>
         </div>
         <div className="lab-stat-card">
           <div className="lab-stat-value" style={{ color: '#6366F1' }}>
-            {Object.keys(testGroups).length}
+            {new Set(labs.map((l) => l.sourceLab || 'Default')).size}
           </div>
-          <div className="lab-stat-label">Unique Tests</div>
+          <div className="lab-stat-label">Contributing Hospitals</div>
         </div>
       </div>
 
-      {/* Test Trend Cards */}
-      <div className="lab-trend-cards">
-        {Object.entries(testGroups).map(([testName, results]) => {
-          const sorted = [...results].sort((a, b) => a.testDate.localeCompare(b.testDate));
-          const latest = sorted[sorted.length - 1];
-          const refRange = latest.referenceRangeLow && latest.referenceRangeHigh
-            ? `${latest.referenceRangeLow}–${latest.referenceRangeHigh} ${latest.unit}`
-            : 'Standard';
+      {/* Search & Filter Toolbar */}
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: '14px',
+          marginBottom: '18px',
+        }}
+      >
+        {/* Category Pills */}
+        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+          {(
+            [
+              { id: 'all', label: 'All Tests' },
+              { id: 'metabolic', label: 'Metabolic & Diabetes' },
+              { id: 'lipid', label: 'Lipid Profile' },
+              { id: 'renal', label: 'Kidney / Renal' },
+            ] as const
+          ).map((c) => (
+            <button
+              key={c.id}
+              onClick={() => setCategoryFilter(c.id)}
+              style={{
+                padding: '6px 14px',
+                borderRadius: '8px',
+                border: categoryFilter === c.id ? '1.5px solid #4F46E5' : '1px solid #E2E8F0',
+                backgroundColor: categoryFilter === c.id ? '#EEF2FF' : '#FFFFFF',
+                color: categoryFilter === c.id ? '#4F46E5' : '#64748B',
+                fontSize: '12.5px',
+                fontWeight: 600,
+                cursor: 'pointer',
+              }}
+            >
+              {c.label}
+            </button>
+          ))}
+        </div>
 
-          return (
-            <div key={testName} className="ui-card lab-trend-card">
-              <div className="lab-trend-header">
-                <div className="lab-trend-icon">
-                  <FileText size={16} />
-                </div>
-                <div>
-                  <div className="lab-trend-name">{testName}</div>
-                  <div className="lab-trend-range">Ref: {refRange}</div>
-                </div>
-                {getTrendIcon(testName)}
-              </div>
+        {/* Search & Sort */}
+        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+          <div className="search-input-wrapper" style={{ width: '220px' }}>
+            <Search size={14} className="search-icon" />
+            <input
+              type="text"
+              className="search-input"
+              style={{ height: '36px', fontSize: '12px' }}
+              placeholder="Filter by test name..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
 
-              {/* Mini sparkline */}
-              <div className="lab-trend-sparkline">
-                <svg viewBox="0 0 120 40" className="sparkline-svg">
-                  {sorted.length > 1 && (() => {
-                    const minV = Math.min(...sorted.map(s => s.value)) * 0.9;
-                    const maxV = Math.max(...sorted.map(s => s.value)) * 1.1;
-                    const pts = sorted.map((s, i) => {
-                      const x = (i / (sorted.length - 1)) * 110 + 5;
-                      const y = 35 - ((s.value - minV) / (maxV - minV)) * 30;
-                      return `${x},${y}`;
-                    });
-                    return (
-                      <polyline
-                        points={pts.join(' ')}
-                        fill="none"
-                        stroke="#F5A623"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    );
-                  })()}
-                  {sorted.map((s, i) => {
-                    const minV = Math.min(...sorted.map(s2 => s2.value)) * 0.9;
-                    const maxV = Math.max(...sorted.map(s2 => s2.value)) * 1.1;
-                    const x = sorted.length > 1 ? (i / (sorted.length - 1)) * 110 + 5 : 60;
-                    const y = sorted.length > 1 ? 35 - ((s.value - minV) / (maxV - minV)) * 30 : 20;
-                    const isCrit = initialRiskFlags.some(f => f.labResultId === s.labResultId);
-                    return (
-                      <circle key={i} cx={x} cy={y} r="3"
-                        fill={isCrit ? '#EF4444' : '#3B82F6'}
-                        stroke="#fff" strokeWidth="1.5"
-                      />
-                    );
-                  })}
-                </svg>
-              </div>
-
-              <div className="lab-trend-latest">
-                <span className="lab-trend-latest-value">{latest.value} {latest.unit}</span>
-                <span className="lab-trend-latest-date">
-                  {new Date(latest.testDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}
-                </span>
-              </div>
-            </div>
-          );
-        })}
+          <div className="sort-dropdown">
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as any)}
+              style={{ padding: '6px 10px', borderRadius: '8px', border: '1px solid #E2E8F0', fontSize: '12px' }}
+            >
+              <option value="date">Sort: Latest Date</option>
+              <option value="name">Sort: Test Name</option>
+              <option value="status">Sort: Risk Status</option>
+            </select>
+          </div>
+        </div>
       </div>
 
-      {/* Detailed Lab Table */}
-      <div className="records-table-card">
-        <div className="table-responsive">
-          <table className="records-table">
+      {/* Lab Results Table Card */}
+      <div className="ui-card" style={{ padding: '0', overflow: 'hidden' }}>
+        <div className="timeline-table-container">
+          <table className="timeline-table">
             <thead>
               <tr>
                 <th>Test Name</th>
-                <th>Value</th>
+                <th>Result Value</th>
                 <th>Reference Range</th>
-                <th>Source Lab</th>
+                <th>Trend</th>
+                <th>Clinical Status</th>
+                <th>Hospital / Facility</th>
                 <th>Date</th>
-                <th>Status</th>
                 <th style={{ textAlign: 'right' }}>Actions</th>
               </tr>
             </thead>
             <tbody>
-              {labs.map((lab) => (
-                <tr key={lab.labResultId} className="record-row" onClick={() => onSelectRecord?.(lab)}>
-                  <td>
-                    <div className="record-title-cell">
-                      <div className="record-type-icon lab">
-                        <FileText size={16} />
+              {sortedLabs.length === 0 ? (
+                <tr>
+                  <td colSpan={8} style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--text-secondary)' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
+                      <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: '#FEF3C7', color: '#D97706', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <FileText size={24} />
                       </div>
-                      <span className="record-main-title">{lab.testName}</span>
+                      <div style={{ fontWeight: 700, fontSize: '15px', color: 'var(--text-primary)' }}>
+                        {labs.length === 0 ? 'No Lab Reports Digitized Yet' : 'No matching lab records found'}
+                      </div>
+                      <p style={{ fontSize: '13px', color: 'var(--text-secondary)', maxWidth: '400px', margin: 0 }}>
+                        {labs.length === 0
+                          ? 'Upload blood tests, metabolic panels, or lipid profile reports from Apollo, Fortis, or Max Healthcare to track biomarker trends.'
+                          : 'Try changing your search term or category filter.'}
+                      </p>
+                      {labs.length === 0 && (
+                        <button className="btn-primary" onClick={onOpenUpload} style={{ marginTop: '8px', padding: '8px 18px', fontSize: '13px' }}>
+                          Upload Lab Report
+                        </button>
+                      )}
                     </div>
                   </td>
-                  <td>
-                    <span style={{
-                      fontWeight: 700,
-                      color: initialRiskFlags.some(f => f.labResultId === lab.labResultId) ? '#DC2626' : 'var(--text-primary)'
-                    }}>
-                      {lab.value} {lab.unit}
-                    </span>
-                  </td>
-                  <td style={{ fontSize: '12.5px', color: 'var(--text-muted)' }}>
-                    {lab.referenceRangeLow && lab.referenceRangeHigh
-                      ? `${lab.referenceRangeLow}–${lab.referenceRangeHigh} ${lab.unit}`
-                      : '—'}
-                  </td>
-                  <td style={{ fontWeight: 600, color: 'var(--text-secondary)' }}>
-                    {lab.sourceLab || 'Unknown'}
-                  </td>
-                  <td style={{ whiteSpace: 'nowrap', color: 'var(--text-secondary)' }}>
-                    {new Date(lab.testDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
-                  </td>
-                  <td>{getStatusBadge(lab)}</td>
-                  <td style={{ textAlign: 'right' }}>
-                    <button className="btn-view-scan" onClick={(e) => { e.stopPropagation(); onSelectRecord?.(lab); }}>
-                      <Eye size={13} />
-                      <span>View</span>
-                    </button>
-                  </td>
                 </tr>
-              ))}
+              ) : (
+                sortedLabs.map((lab) => {
+                const flag = riskFlags.find((f) => f.labResultId === lab.labResultId);
+                const hasRange = lab.referenceRangeLow && lab.referenceRangeHigh;
+
+                return (
+                  <tr
+                    key={lab.labResultId}
+                    onClick={() => handleRowClick(lab)}
+                    style={{ cursor: 'pointer' }}
+                  >
+                    <td>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <div
+                          style={{
+                            width: '32px',
+                            height: '32px',
+                            borderRadius: '8px',
+                            backgroundColor: flag ? '#FEE2E2' : '#EEF2FF',
+                            color: flag ? '#DC2626' : '#4F46E5',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            flexShrink: 0,
+                          }}
+                        >
+                          <FileText size={16} />
+                        </div>
+                        <div>
+                          <div style={{ fontWeight: 700, color: '#1E293B', fontSize: '13px' }}>
+                            {lab.testName}
+                          </div>
+                          {lab.manuallyCorrected && (
+                            <span style={{ fontSize: '10.5px', color: '#6366F1', fontWeight: 600 }}>
+                              Manually Verified
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </td>
+
+                    <td>
+                      <span
+                        style={{
+                          fontWeight: 800,
+                          fontSize: '14px',
+                          color: flag ? '#DC2626' : '#1E293B',
+                        }}
+                      >
+                        {lab.value} <span style={{ fontSize: '11px', fontWeight: 500, color: '#64748B' }}>{lab.unit}</span>
+                      </span>
+                    </td>
+
+                    <td>
+                      {hasRange ? (
+                        <span style={{ fontSize: '12px', color: '#64748B' }}>
+                          {lab.referenceRangeLow} – {lab.referenceRangeHigh} {lab.unit}
+                        </span>
+                      ) : (
+                        <span style={{ fontSize: '12px', color: '#94A3B8' }}>Standard</span>
+                      )}
+                    </td>
+
+                    <td>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        {getTrendIcon(lab.testName)}
+                        <span style={{ fontSize: '11px', color: '#64748B' }}>
+                          {testGroups[lab.testName]?.length > 1 ? `${testGroups[lab.testName].length} pts` : 'Initial'}
+                        </span>
+                      </div>
+                    </td>
+
+                    <td>{getStatusBadge(lab)}</td>
+
+                    <td>
+                      <span style={{ fontSize: '12.5px', color: '#475569', fontWeight: 500 }}>
+                        {lab.sourceLab || 'Hospital Lab'}
+                      </span>
+                    </td>
+
+                    <td>
+                      <span style={{ fontSize: '12px', color: '#64748B' }}>
+                        {new Date(lab.testDate).toLocaleDateString('en-GB', {
+                          day: '2-digit',
+                          month: 'short',
+                          year: 'numeric',
+                        })}
+                      </span>
+                    </td>
+
+                    <td style={{ textAlign: 'right' }}>
+                      <button
+                        className="btn-link"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleRowClick(lab);
+                        }}
+                        style={{
+                          fontSize: '12px',
+                          color: '#4F46E5',
+                          fontWeight: 600,
+                          background: 'none',
+                          border: 'none',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        <Eye size={14} style={{ display: 'inline', marginRight: '4px' }} />
+                        View Scan
+                      </button>
+                    </td>
+                  </tr>
+                );
+              }))}
             </tbody>
           </table>
         </div>

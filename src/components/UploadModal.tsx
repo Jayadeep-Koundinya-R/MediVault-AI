@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, UploadCloud, FileText, Pill, Syringe, Check, AlertTriangle, Sparkles, RefreshCw } from 'lucide-react';
 import { DocumentType, HealthDocument, LabResult, Prescription, Vaccination } from '../types';
 import confetti from 'canvas-confetti';
 
 interface UploadModalProps {
   isOpen: boolean;
+  initialDocumentType?: DocumentType;
   onClose: () => void;
   onSaveRecord: (
     doc: HealthDocument,
@@ -12,8 +13,13 @@ interface UploadModalProps {
   ) => void;
 }
 
-export const UploadModal: React.FC<UploadModalProps> = ({ isOpen, onClose, onSaveRecord }) => {
-  const [selectedType, setSelectedType] = useState<DocumentType>('lab_report');
+export const UploadModal: React.FC<UploadModalProps> = ({
+  isOpen,
+  initialDocumentType,
+  onClose,
+  onSaveRecord,
+}) => {
+  const [selectedType, setSelectedType] = useState<DocumentType>(initialDocumentType || 'lab_report');
   const [scanStep, setScanStep] = useState<'pick' | 'scanning' | 'review'>('pick');
   const [confidence, setConfidence] = useState(97.8);
   const [isManualEdit, setIsManualEdit] = useState(false);
@@ -37,9 +43,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ isOpen, onClose, onSav
   const [vacDose, setVacDose] = useState('3');
   const [vacFacility, setVacFacility] = useState('Apollo Immunization Center');
 
-  if (!isOpen) return null;
-
-  const handleSelectPreset = (type: DocumentType) => {
+  function handleSelectPreset(type: DocumentType) {
     setSelectedType(type);
     if (type === 'lab_report') {
       setLabName('Fasting Blood Glucose');
@@ -61,7 +65,16 @@ export const UploadModal: React.FC<UploadModalProps> = ({ isOpen, onClose, onSav
       setVacFacility('Manipal Hospital');
       setConfidence(99.2);
     }
-  };
+  }
+
+  useEffect(() => {
+    if (initialDocumentType) {
+      handleSelectPreset(initialDocumentType);
+    }
+    setScanStep('pick');
+  }, [isOpen, initialDocumentType]);
+
+  if (!isOpen) return null;
 
   const handleRunOcr = () => {
     setScanStep('scanning');
@@ -350,8 +363,22 @@ export const UploadModal: React.FC<UploadModalProps> = ({ isOpen, onClose, onSav
 
               {/* Extracted Fields Form */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>
-                  Structured Extracted Fields (schema.md)
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
+                  <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>
+                    Structured Extracted Fields (schema.md)
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ fontSize: '12px', fontWeight: 600, color: '#64748B' }}>Recategorize:</span>
+                    <select
+                      value={selectedType}
+                      onChange={(e) => setSelectedType(e.target.value as DocumentType)}
+                      style={{ padding: '4px 10px', borderRadius: '6px', border: '1px solid #CBD5E1', fontSize: '12px', fontWeight: 600, color: '#1E293B', background: '#fff' }}
+                    >
+                      <option value="lab_report">Lab Report</option>
+                      <option value="prescription">Prescription</option>
+                      <option value="vaccination">Vaccination</option>
+                    </select>
+                  </div>
                 </div>
 
                 {selectedType === 'lab_report' && (

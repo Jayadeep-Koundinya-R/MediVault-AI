@@ -9,6 +9,9 @@ import {
   Syringe,
   Settings,
   HelpCircle,
+  Stethoscope,
+  UserCheck,
+  CreditCard,
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -24,6 +27,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, onOpe
     { id: 'labs', label: 'Lab Reports', icon: FileText },
     { id: 'prescriptions', label: 'Prescriptions', icon: Pill },
     { id: 'vaccinations', label: 'Vaccinations', icon: Syringe },
+    { id: 'consultations', label: 'Doctor Consultations', icon: Stethoscope },
+    { id: 'doctor-portal', label: 'Doctor Review Portal', icon: UserCheck },
+    { id: 'pricing', label: 'Plans & Billing', icon: CreditCard },
     { id: 'summary', label: 'AI Health Summary', icon: Sparkles },
   ];
 

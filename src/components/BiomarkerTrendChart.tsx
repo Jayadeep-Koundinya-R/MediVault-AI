@@ -5,13 +5,38 @@ import { biomarkerTrendSeries } from '../data/mockHealthData';
 interface BiomarkerTrendChartProps {
   onOpenSummaryModal: () => void;
   onOpenFlagDetails: () => void;
+  hasData?: boolean;
+  onOpenUpload?: () => void;
 }
 
 export const BiomarkerTrendChart: React.FC<BiomarkerTrendChartProps> = ({
   onOpenSummaryModal,
   onOpenFlagDetails,
+  hasData = false,
+  onOpenUpload,
 }) => {
   const [hoveredPoint, setHoveredPoint] = useState<number | null>(null);
+
+  if (!hasData || biomarkerTrendSeries.length === 0) {
+    return (
+      <div className="ui-card trend-card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', textAlign: 'center', minHeight: '320px', padding: '32px 24px' }}>
+        <div style={{ width: '52px', height: '52px', borderRadius: '16px', background: 'rgba(99, 102, 241, 0.12)', color: '#4F46E5', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '16px' }}>
+          <TrendingUp size={26} />
+        </div>
+        <h3 style={{ fontSize: '16px', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '8px' }}>
+          No Biomarker Trends Digitized Yet
+        </h3>
+        <p style={{ fontSize: '13px', color: 'var(--text-secondary)', maxWidth: '420px', lineHeight: 1.5, marginBottom: '20px' }}>
+          Upload your fasting blood glucose, HbA1c, or lipid reports across Apollo, Fortis, or Max Healthcare to activate longitudinal trend synthesis across hospitals.
+        </p>
+        {onOpenUpload && (
+          <button className="btn-primary" onClick={onOpenUpload} style={{ padding: '9px 18px', fontSize: '13px' }}>
+            Upload First Lab Report
+          </button>
+        )}
+      </div>
+    );
+  }
 
   // SVG coordinate configuration
   const width = 640;
