@@ -83,7 +83,7 @@ Return ONLY a JSON object with this exact structure:
 
 Do not include any explanation outside the JSON.`;
 
-  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${apiKey}`;
 
   const payload = {
     contents: [
