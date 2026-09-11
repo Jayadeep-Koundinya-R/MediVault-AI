@@ -7,6 +7,7 @@ import {
   ShieldCheck,
   Sparkles,
   Syringe,
+  Settings,
   HelpCircle,
 } from 'lucide-react';
 
@@ -65,6 +66,17 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, onOpe
 
       {/* Sidebar Footer */}
       <div className="sidebar-bottom">
+        <button
+          className={`nav-item ${activeTab === 'settings' ? 'active' : ''}`}
+          onClick={() => setActiveTab('settings')}
+          title="Settings"
+          aria-label="Settings"
+        >
+          <div className="nav-item-icon-wrapper">
+            <Settings size={20} />
+          </div>
+        </button>
+
         <button
           className="nav-item"
           onClick={onOpenConsent}
